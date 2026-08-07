@@ -49,39 +49,30 @@ void Shader::use() const {
 }
 
 void Shader::setUniform(const std::string& name, float value) {
-    int location = uniformLocations[name];
-    if (location == -1) {
-        location = glGetUniformLocation(ID, name.c_str());
-        uniformLocations[name] = location;
-    }
-    glUniform1f(location, value);
+    glUniform1f(getUniformLocation(name), value);
 }
 
 void Shader::setUniform(const std::string& name, int value) {
-    int location = uniformLocations[name];
-    if (location == -1) {
-        location = glGetUniformLocation(ID, name.c_str());
-        uniformLocations[name] = location;
-    }
-    glUniform1i(location, value);
+    glUniform1i(getUniformLocation(name), value);
 }
 
 void Shader::setUniform(const std::string& name, const glm::vec3& value) {
-    int location = uniformLocations[name];
-    if (location == -1) {
-        location = glGetUniformLocation(ID, name.c_str());
-        uniformLocations[name] = location;
-    }
-    glUniform3fv(location, 1, &value[0]);
+    glUniform3fv(getUniformLocation(name), 1, &value[0]);
 }
 
 void Shader::setUniform(const std::string& name, const glm::mat4& value) {
-    int location = uniformLocations[name];
-    if (location == -1) {
-        location = glGetUniformLocation(ID, name.c_str());
-        uniformLocations[name] = location;
+    glUniformMatrix4fv(getUniformLocation(name), 1, GL_FALSE, &value[0][0]);
+}
+
+int Shader::getUniformLocation(const std::string& name) {
+    const auto existing = uniformLocations.find(name);
+    if (existing != uniformLocations.end()) {
+        return existing->second;
     }
-    glUniformMatrix4fv(location, 1, GL_FALSE, &value[0][0]);
+
+    const int location = glGetUniformLocation(ID, name.c_str());
+    uniformLocations.emplace(name, location);
+    return location;
 }
 
 void Shader::recompile() {

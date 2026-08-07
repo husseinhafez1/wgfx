@@ -8,8 +8,11 @@
 #include <sstream>
 #include <fstream>
 #include "shader.h"
+#include "camera.h"
 
-void processInput(GLFWwindow* window);
+Camera camera;
+
+void processInput(GLFWwindow* window, float deltaTime);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 int main() {
@@ -56,8 +59,22 @@ int main() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
+    float lastFrameTime = 0.0f;
+
+    glm::mat4 model = glm::mat4(1.0f);
+    glm::mat4 view = camera.getViewMatrix();
+    glm::mat4 projection = camera.getProjectionMatrix();
+
+    shader.use();
+    shader.setUniform("model", model);
+    shader.setUniform("view", view);
+    shader.setUniform("projection", projection);
+
     while (!glfwWindowShouldClose(window)) {
-        processInput(window);
+        float currentFrameTime = static_cast<float>(glfwGetTime());
+        float deltaTime = currentFrameTime - lastFrameTime;
+        lastFrameTime = currentFrameTime;
+        processInput(window, deltaTime);
         // if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
         //     // Recompile shaders
         //     std::cout << "Recompiling shaders..." << std::endl;
@@ -65,7 +82,12 @@ int main() {
         // }
         glClear(GL_COLOR_BUFFER_BIT);
 
+        view = camera.getViewMatrix();
+        projection = camera.getProjectionMatrix();
+
         shader.use();
+        shader.setUniform("view", view);
+        shader.setUniform("projection", projection);
         glBindVertexArray(vao);
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
@@ -80,7 +102,7 @@ int main() {
     return 0;
 }
 
-void processInput(GLFWwindow* window) {
+void processInput(GLFWwindow* window, float deltaTime) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
@@ -89,6 +111,24 @@ void processInput(GLFWwindow* window) {
         std::cout << "Recompiling shaders..." << std::endl;
         // shader.recompile();
     }
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        camera.processInput(deltaTime, CameraMovement::FORWARD);
+
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        camera.processInput(deltaTime, CameraMovement::BACKWARD);
+
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        camera.processInput(deltaTime, CameraMovement::LEFT);
+
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        camera.processInput(deltaTime, CameraMovement::RIGHT);
+
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+        camera.processInput(deltaTime, CameraMovement::UP);
+
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+        camera.processInput(deltaTime, CameraMovement::DOWN);
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {

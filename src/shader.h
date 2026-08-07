@@ -25,6 +25,7 @@ private:
     std::string vertexPath;
     std::string fragmentPath;
     std::unordered_map<std::string, int> uniformLocations;
+    int getUniformLocation(const std::string& name);
     std::string readShaderSource(const std::string& filePath) const;
     void checkCompileErrors(unsigned int shader, const std::string& type) const;
 };

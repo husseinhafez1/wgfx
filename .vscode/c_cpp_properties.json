@@ -2,7 +2,16 @@
     "configurations": [
         {
             "name": "Clang",
-            "compileCommands": "${workspaceFolder}/build-clang/compile_commands.json"
+            "compilerPath": "C:/Program Files/LLVM/bin/clang++.exe",
+            "intelliSenseMode": "windows-clang-x64",
+            "cppStandard": "c++17",
+            "compileCommands": "${workspaceFolder}/build-clang/compile_commands.json",
+            "includePath": [
+                "${workspaceFolder}/src",
+                "${workspaceFolder}/deps/glad/include",
+                "${workspaceFolder}/deps/glfw/include",
+                "${workspaceFolder}/deps/glm"
+            ]
         }
     ],
     "version": 4

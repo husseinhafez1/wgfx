@@ -21,6 +21,8 @@ add_executable(wgfx
     src/main.cpp
     src/shader.cpp
     src/shader.h
+    src/camera.cpp
+    src/camera.h
 )
 target_compile_features(wgfx PRIVATE cxx_std_17)
 target_include_directories(wgfx PRIVATE src)
