@@ -1,16 +1,16 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
 
 #include <iostream>
 #include <vector>
 #include <string>
 #include <sstream>
 #include <fstream>
+#include "shader.h"
 
 void processInput(GLFWwindow* window);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-unsigned int createShaderProgram(const char* vertexShaderSource, const char* fragmentShaderSource);
-std::string readShaderSource(const std::string& filePath);
 
 int main() {
     // Initialize GLFW
@@ -45,11 +45,7 @@ int main() {
          0.0f,  0.5f, 0.0f  // Top center
     };
 
-    std::string vertexShaderSource = readShaderSource("basic.vert.glsl");
-    std::string fragmentShaderSource = readShaderSource("basic.frag.glsl");
-
-    unsigned int shaderProgram = createShaderProgram(vertexShaderSource.c_str(), fragmentShaderSource.c_str());
-    glUseProgram(shaderProgram);
+    Shader shader("basic.vert.glsl", "basic.frag.glsl");
 
     unsigned int vao, vbo;
     glGenVertexArrays(1, &vao);
@@ -62,8 +58,14 @@ int main() {
 
     while (!glfwWindowShouldClose(window)) {
         processInput(window);
+        // if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+        //     // Recompile shaders
+        //     std::cout << "Recompiling shaders..." << std::endl;
+        //     // shader.recompile();
+        // }
         glClear(GL_COLOR_BUFFER_BIT);
 
+        shader.use();
         glBindVertexArray(vao);
         glDrawArrays(GL_TRIANGLES, 0, 3);
 
@@ -73,7 +75,6 @@ int main() {
 
     glDeleteVertexArrays(1, &vao);
     glDeleteBuffers(1, &vbo);
-    glDeleteProgram(shaderProgram);
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
@@ -82,61 +83,14 @@ int main() {
 void processInput(GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+        // Recompile shaders
+        std::cout << "Recompiling shaders..." << std::endl;
+        // shader.recompile();
+    }
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
-}
-
-unsigned int createShaderProgram(const char* vertexShaderSource, const char* fragmentShaderSource) {
-    unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
-    glCompileShader(vertexShader);
-
-    int success;
-    char infoLog[512];
-    glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(vertexShader, 512, nullptr, infoLog);
-        std::cerr << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-
-    unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
-    glCompileShader(fragmentShader);
-
-    glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        glGetShaderInfoLog(fragmentShader, 512, nullptr, infoLog);
-        std::cerr << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
-    }
-
-    unsigned int shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
-
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
-        glGetProgramInfoLog(shaderProgram, 512, nullptr, infoLog);
-        std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-    }
-
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-    return shaderProgram;
-}
-
-std::string readShaderSource(const std::string& filePath) {
-    const std::string fullPath = std::string(SHADER_DIR) + filePath;
-    std::ifstream shaderFile(fullPath);
-    if (!shaderFile.is_open()) {
-        std::cerr << "Failed to open shader file: " << fullPath << std::endl;
-        return "";
-    }
-
-    std::stringstream shaderStream;
-    shaderStream << shaderFile.rdbuf();
-    shaderFile.close();
-    return shaderStream.str();
 }
