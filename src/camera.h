@@ -27,8 +27,8 @@ public:
     void processInput(float deltaTime, CameraMovement movement);
     void setAspectRatio(float aspectRatio);
 
-    glm::mat4 getViewMatrix() const;
-    glm::mat4 getProjectionMatrix() const;
+    [[nodiscard]] glm::mat4 getViewMatrix() const;
+    [[nodiscard]] glm::mat4 getProjectionMatrix() const;
 
 private:
     glm::vec3 position;
