@@ -43,6 +43,7 @@
 build/
 Build/
 build-*/
+.vs/
 
 # CMake generated files
 CMakeFiles/
@@ -67,3 +68,7 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+# Keep vendored dependencies, including prebuilt libraries.
+!deps/
+!deps/**
