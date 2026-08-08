@@ -26,14 +26,13 @@ void processInput(GLFWwindow* window, float deltaTime);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 int main() {
-    // Initialize GLFW
     Window window("wgfx");
 
     glEnable(GL_DEPTH_TEST);
 
     try {
         Shader shader("basic.vert.glsl", "basic.frag.glsl");
-        Model cow("helmet/DamagedHelmet.glb");
+        Model cow("scifi_helmet/scene.gltf");
         Skybox skybox({
             "skybox/right.jpg",
             "skybox/left.jpg",
