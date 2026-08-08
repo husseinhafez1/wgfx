@@ -33,6 +33,8 @@ add_executable(wgfx
     src/input.h
     src/buffer.cpp
     src/buffer.h
+    src/model.cpp
+    src/model.h
 )
 target_compile_features(wgfx PRIVATE cxx_std_17)
 target_include_directories(wgfx PRIVATE src)
