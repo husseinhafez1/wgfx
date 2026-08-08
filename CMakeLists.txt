@@ -44,6 +44,8 @@ add_executable(wgfx
     src/texture.h
     src/skybox.cpp
     src/skybox.h
+    src/window.cpp
+    src/window.h
 )
 target_compile_features(wgfx PRIVATE cxx_std_17)
 target_include_directories(wgfx PRIVATE src)
