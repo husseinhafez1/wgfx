@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <tiny_obj_loader.h>
 #include <stb_image.h>
 
@@ -31,8 +32,9 @@ int main() {
     glEnable(GL_DEPTH_TEST);
 
     try {
-        Shader shader("basic.vert.glsl", "basic.frag.glsl");
-        Model cow("scifi_helmet/scene.gltf");
+        Shader shader("pbr.vert.glsl", "pbr.frag.glsl");
+        Model sponza("sponza/Sponza.gltf");
+        Model helmet("helmet/DamagedHelmet.glb");
         Skybox skybox({
             "skybox/right.jpg",
             "skybox/left.jpg",
@@ -44,15 +46,20 @@ int main() {
 
         float lastFrameTime = 0.0f;
 
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::scale(model, glm::vec3(0.5f, 0.5f, 0.5f));
+        const glm::mat4 sponzaModel(1.0f);
+        const glm::mat4 helmetModel = glm::translate(
+            glm::mat4(1.0f),
+            glm::vec3(0.0f, 3.0f, 0.0f)
+        );
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 projection = camera.getProjectionMatrix();
 
         shader.use();
-        shader.setUniform("model", model);
         shader.setUniform("view", view);
         shader.setUniform("projection", projection);
+        shader.setUniform("environmentMap", 1);
+        shader.setUniform("lightDirection", glm::vec3(-1.0f, -0.55f, 0.25f));
+        shader.setUniform("lightColor", glm::vec3(4.0f));
 
         while (!glfwWindowShouldClose(window.get())) {
             float currentFrameTime = static_cast<float>(glfwGetTime());
@@ -66,16 +73,20 @@ int main() {
             // }
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            model = glm::rotate(model, glm::radians(20.0f * deltaTime), glm::vec3(0.0f, 1.0f, 0.0f));
-
             view = camera.getViewMatrix();
             projection = camera.getProjectionMatrix();
             
             shader.use();
-            shader.setUniform("model", model);
             shader.setUniform("view", view);
             shader.setUniform("projection", projection);
-            cow.draw(shader);
+            shader.setUniform("cameraPosition", camera.getPosition());
+            skybox.bind(1);
+
+            shader.setUniform("model", sponzaModel);
+            sponza.draw(shader);
+
+            shader.setUniform("model", helmetModel);
+            helmet.draw(shader);
             skybox.draw(view, projection);
 
             window.pollEvents();

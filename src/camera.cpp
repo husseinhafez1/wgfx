@@ -40,6 +40,10 @@ glm::mat4 Camera::getProjectionMatrix() const {
     return glm::perspective(glm::radians(fov), aspectRatio, nearPlane, farPlane);
 }
 
+const glm::vec3& Camera::getPosition() const {
+    return position;
+}
+
 void Camera::processInput(float deltaTime, CameraMovement movement) {
     float speed = movementSpeed * deltaTime;
 

@@ -19,6 +19,7 @@ public:
     Skybox& operator=(const Skybox&) = delete;
 
     void draw(const glm::mat4& view, const glm::mat4& projection);
+    void bind(unsigned int slot) const;
 
 private:
     void loadAtlas(const std::string& cubemapAtlas);

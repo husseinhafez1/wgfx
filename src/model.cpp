@@ -285,6 +285,8 @@ Model::MeshData Model::loadGltf(const std::string& path) {
         Material material;
         const auto& factor = gltfMaterial.pbrData.baseColorFactor;
         material.baseColor = glm::vec4(factor.x(), factor.y(), factor.z(), factor.w());
+        material.metallic = gltfMaterial.pbrData.metallicFactor;
+        material.roughness = gltfMaterial.pbrData.roughnessFactor;
 
         if (gltfMaterial.pbrData.baseColorTexture.has_value()) {
             const auto& textureInfo = gltfMaterial.pbrData.baseColorTexture.value();
@@ -308,6 +310,20 @@ Model::MeshData Model::loadGltf(const std::string& path) {
                 if (gltfTexture.imageIndex.has_value()
                     && gltfTexture.imageIndex.value() < imageTextures.size()) {
                     material.baseColorTexture = imageTextures[gltfTexture.imageIndex.value()];
+                }
+            }
+        }
+
+        if (gltfMaterial.pbrData.metallicRoughnessTexture.has_value()) {
+            const auto& textureInfo = gltfMaterial.pbrData.metallicRoughnessTexture.value();
+            if (!gltfMaterial.pbrData.baseColorTexture.has_value()) {
+                material.uvSet = textureInfo.texCoordIndex;
+            }
+            if (textureInfo.textureIndex < asset.textures.size()) {
+                const fastgltf::Texture& gltfTexture = asset.textures[textureInfo.textureIndex];
+                if (gltfTexture.imageIndex.has_value()
+                    && gltfTexture.imageIndex.value() < imageTextures.size()) {
+                    material.metallicRoughnessTexture = imageTextures[gltfTexture.imageIndex.value()];
                 }
             }
         }
@@ -496,16 +512,26 @@ Model::~Model() {
 void Model::draw(Shader& shader) const {
     shader.use();
     shader.setUniform("baseColorTexture", 0);
+    shader.setUniform("metallicRoughnessTexture", 2);
     glBindVertexArray(vao);
 
     for (const Submesh& submesh : submeshes) {
         const Material& material = materials[submesh.materialIndex];
         shader.setUniform("baseColor", material.baseColor);
+        shader.setUniform("metallic", material.metallic);
+        shader.setUniform("roughness", material.roughness);
         shader.setUniform("hasBaseColorTexture", material.baseColorTexture ? 1 : 0);
+        shader.setUniform("hasMetallicRoughnessTexture", material.metallicRoughnessTexture ? 1 : 0);
         if (material.baseColorTexture) {
             material.baseColorTexture->bind(0);
         } else {
             glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, 0);
+        }
+        if (material.metallicRoughnessTexture) {
+            material.metallicRoughnessTexture->bind(2);
+        } else {
+            glActiveTexture(GL_TEXTURE2);
             glBindTexture(GL_TEXTURE_2D, 0);
         }
 

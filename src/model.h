@@ -21,6 +21,9 @@ private:
     struct Material {
         glm::vec4 baseColor{1.0f};
         std::shared_ptr<Texture> baseColorTexture;
+        std::shared_ptr<Texture> metallicRoughnessTexture;
+        float metallic = 0.0f;
+        float roughness = 1.0f;
         std::size_t uvSet = 0;
         glm::vec2 uvOffset{0.0f};
         glm::vec2 uvScale{1.0f};
