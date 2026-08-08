@@ -25,6 +25,7 @@ public:
     void setPosition(float x, float y, float z);
     void setRotation(float pitch, float yaw, float roll);
     void processInput(float deltaTime, CameraMovement movement);
+    void processMouseMovement(float xOffset, float yOffset);
     void setAspectRatio(float aspectRatio);
 
     [[nodiscard]] glm::mat4 getViewMatrix() const;

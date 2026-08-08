@@ -122,6 +122,10 @@ int main() {
 }
 
 void processInput(GLFWwindow* window, float deltaTime) {
+    static bool rotating = false;
+    static double lastMouseX = 0.0;
+    static double lastMouseY = 0.0;
+
     if (input.onKeyPress(GLFW_KEY_ESCAPE)) {
         glfwSetWindowShouldClose(window, true);
     }
@@ -149,6 +153,25 @@ void processInput(GLFWwindow* window, float deltaTime) {
 
     if (input.onKeyPress(GLFW_KEY_E))
         camera.processInput(deltaTime, CameraMovement::DOWN);
+
+    if (input.onButtonHold(GLFW_MOUSE_BUTTON_LEFT)) {
+        double mouseX;
+        double mouseY;
+        glfwGetCursorPos(window, &mouseX, &mouseY);
+
+        if (rotating) {
+            camera.processMouseMovement(
+                static_cast<float>(mouseX - lastMouseX),
+                static_cast<float>(lastMouseY - mouseY)
+            );
+        }
+
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
+        rotating = true;
+    } else {
+        rotating = false;
+    }
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
