@@ -40,6 +40,8 @@ add_executable(wgfx
     src/buffer.h
     src/model.cpp
     src/model.h
+    src/texture.cpp
+    src/texture.h
 )
 target_compile_features(wgfx PRIVATE cxx_std_17)
 target_include_directories(wgfx PRIVATE src)

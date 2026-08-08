@@ -54,7 +54,7 @@ int main() {
 
     {
         Shader shader("basic.vert.glsl", "basic.frag.glsl");
-        Model cow("helmet/DamagedHelmet.glb");
+        Model cow("cow/cow.obj");
 
         float lastFrameTime = 0.0f;
 
@@ -89,7 +89,7 @@ int main() {
             shader.setUniform("model", model);
             shader.setUniform("view", view);
             shader.setUniform("projection", projection);
-            cow.draw();
+            cow.draw(shader);
 
             glfwSwapBuffers(window);
             glfwPollEvents();
