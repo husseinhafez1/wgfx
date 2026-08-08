@@ -42,11 +42,14 @@ add_executable(wgfx
     src/model.h
     src/texture.cpp
     src/texture.h
+    src/skybox.cpp
+    src/skybox.h
 )
 target_compile_features(wgfx PRIVATE cxx_std_17)
 target_include_directories(wgfx PRIVATE src)
 target_compile_definitions(wgfx PRIVATE
     SHADER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/res/shaders/"
     MODEL_DIR="${CMAKE_CURRENT_SOURCE_DIR}/res/models/"
+    CUBEMAP_DIR="${CMAKE_CURRENT_SOURCE_DIR}/res/cubemaps/"
 )
 target_link_libraries(wgfx PRIVATE glad glfw glm::glm tinyobjloader stb_image fastgltf::fastgltf opengl32 gdi32 user32 shell32 winmm)

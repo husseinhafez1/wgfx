@@ -16,6 +16,8 @@
 #include "input.h"
 #include "buffer.h"
 #include "model.h"
+#include "skybox.h"
+#include "skybox.h"
 
 Camera camera;
 Input input;
@@ -55,6 +57,14 @@ int main() {
     try {
         Shader shader("basic.vert.glsl", "basic.frag.glsl");
         Model cow("patchwork_holstein_cow/source/Patchwork_Holstein_Cow.glb");
+        Skybox skybox({
+            "skybox/right.jpg",
+            "skybox/left.jpg",
+            "skybox/top.jpg",
+            "skybox/bottom.jpg",
+            "skybox/front.jpg",
+            "skybox/back.jpg",
+        });
 
         float lastFrameTime = 0.0f;
 
@@ -90,6 +100,7 @@ int main() {
             shader.setUniform("view", view);
             shader.setUniform("projection", projection);
             cow.draw(shader);
+            skybox.draw(view, projection);
 
             glfwSwapBuffers(window);
             glfwPollEvents();
