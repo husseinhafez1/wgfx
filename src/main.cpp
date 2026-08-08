@@ -1,8 +1,12 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
 
+#include <glm/glm.hpp>
+#include <tiny_obj_loader.h>
+
+#include <algorithm>
 #include <iostream>
+#include <limits>
 #include <vector>
 #include <string>
 
@@ -46,83 +50,112 @@ int main() {
 
     glEnable(GL_DEPTH_TEST);
 
-    std::vector<float> vertices = {
-        // cube vertices
-        -0.5f, -0.5f, -0.5f,  0.5f, -0.5f, -0.5f,  0.5f,  0.5f, -0.5f,
-        0.5f,  0.5f, -0.5f, -0.5f,  0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
+    {
+        tinyobj::attrib_t attributes;
+        std::vector<tinyobj::shape_t> shapes;
+        std::vector<tinyobj::material_t> materials;
+        std::string warning;
+        std::string error;
 
-        -0.5f, -0.5f,  0.5f,  0.5f, -0.5f,  0.5f,  0.5f,  0.5f,  0.5f,
-        0.5f,  0.5f,  0.5f, -0.5f,  0.5f,  0.5f, -0.5f, -0.5f,  0.5f,
+        if (!tinyobj::LoadObj(
+                &attributes,
+                &shapes,
+                &materials,
+                &warning,
+                &error,
+                MODEL_DIR "cow/cow.obj"
+            )) {
+            std::cerr << warning << error << '\n';
+            glfwDestroyWindow(window);
+            glfwTerminate();
+            return -1;
+        }
 
-        -0.5f,  0.5f,  0.5f, -0.5f,  0.5f, -0.5f, -0.5f, -0.5f, -0.5f,
-        -0.5f, -0.5f, -0.5f, -0.5f, -0.5f,  0.5f, -0.5f,  0.5f,  0.5f,
+        if (!warning.empty()) {
+            std::cerr << warning << '\n';
+        }
 
-        0.5f,  0.5f,  0.5f,  0.5f,  0.5f, -0.5f,  0.5f, -0.5f, -0.5f,
-        0.5f, -0.5f, -0.5f,  0.5f, -0.5f,  0.5f,  0.5f,  0.5f,  0.5f,
+        std::vector<float> vertices = attributes.vertices;
+        std::vector<unsigned int> indices;
+        for (const tinyobj::shape_t& shape : shapes) {
+            for (const tinyobj::index_t& index : shape.mesh.indices) {
+                if (index.vertex_index < 0) {
+                    std::cerr << "Cow model contains an invalid vertex index.\n";
+                    glfwDestroyWindow(window);
+                    glfwTerminate();
+                    return -1;
+                }
+                indices.push_back(static_cast<unsigned int>(index.vertex_index));
+            }
+        }
 
-        -0.5f, -0.5f, -0.5f,  0.5f, -0.5f, -0.5f,  0.5f, -0.5f,  0.5f,
-        0.5f, -0.5f,  0.5f, -0.5f, -0.5f,  0.5f, -0.5f, -0.5f, -0.5f,
+        glm::vec3 minimum(std::numeric_limits<float>::max());
+        glm::vec3 maximum(std::numeric_limits<float>::lowest());
+        for (std::size_t i = 0; i < vertices.size(); i += 3) {
+            const glm::vec3 position(vertices[i], vertices[i + 1], vertices[i + 2]);
+            minimum = glm::min(minimum, position);
+            maximum = glm::max(maximum, position);
+        }
 
-        -0.5f,  0.5f, -0.5f,  0.5f,  0.5f, -0.5f,  0.5f,  0.5f,  0.5f,
-        0.5f,  0.5f,  0.5f, -0.5f,  0.5f,  0.5f, -0.5f,  0.5f, -0.5f,
-    };
+        const glm::vec3 center = (minimum + maximum) * 0.5f;
+        const glm::vec3 extent = maximum - minimum;
+        const float scale = 2.0f / std::max({extent.x, extent.y, extent.z});
+        for (std::size_t i = 0; i < vertices.size(); i += 3) {
+            vertices[i] = (vertices[i] - center.x) * scale;
+            vertices[i + 1] = (vertices[i + 1] - center.y) * scale;
+            vertices[i + 2] = (vertices[i + 2] - center.z) * scale;
+        }
 
 
-    Shader shader("basic.vert.glsl", "basic.frag.glsl");
+        Shader shader("basic.vert.glsl", "basic.frag.glsl");
 
-    unsigned int vao;
-    // unsigned int vbo;
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-    // glGenBuffers(1, &vbo);
-    // glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    // glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
-    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    // glEnableVertexAttribArray(0);
+        unsigned int vao;
+        glGenVertexArrays(1, &vao);
+        glBindVertexArray(vao);
 
-    Buffer vertexBuffer(BufferType::VertexBuffer, vertices.data(), vertices.size() * sizeof(float));
-    vertexBuffer.bind();
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
+        Buffer vertexBuffer(BufferType::VertexBuffer, vertices.data(), vertices.size() * sizeof(float));
+        Buffer indexBuffer(BufferType::IndexBuffer, indices.data(), indices.size() * sizeof(unsigned int));
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
 
-    float lastFrameTime = 0.0f;
+        float lastFrameTime = 0.0f;
 
-    glm::mat4 model = glm::mat4(1.0f);
-    glm::mat4 view = camera.getViewMatrix();
-    glm::mat4 projection = camera.getProjectionMatrix();
-
-    shader.use();
-    shader.setUniform("model", model);
-    shader.setUniform("view", view);
-    shader.setUniform("projection", projection);
-
-    while (!glfwWindowShouldClose(window)) {
-        float currentFrameTime = static_cast<float>(glfwGetTime());
-        float deltaTime = currentFrameTime - lastFrameTime;
-        lastFrameTime = currentFrameTime;
-        processInput(window, deltaTime);
-        // if (input.onKeyPress(GLFW_KEY_R)) {
-        //     // Recompile shaders
-        //     std::cout << "Recompiling shaders..." << std::endl;
-        //     // shader.recompile();
-        // }
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        view = camera.getViewMatrix();
-        projection = camera.getProjectionMatrix();
+        glm::mat4 model = glm::mat4(1.0f);
+        glm::mat4 view = camera.getViewMatrix();
+        glm::mat4 projection = camera.getProjectionMatrix();
 
         shader.use();
+        shader.setUniform("model", model);
         shader.setUniform("view", view);
         shader.setUniform("projection", projection);
-        glBindVertexArray(vao);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
 
-        glfwSwapBuffers(window);
-        glfwPollEvents();
+        while (!glfwWindowShouldClose(window)) {
+            float currentFrameTime = static_cast<float>(glfwGetTime());
+            float deltaTime = currentFrameTime - lastFrameTime;
+            lastFrameTime = currentFrameTime;
+            processInput(window, deltaTime);
+            // if (input.onKeyPress(GLFW_KEY_R)) {
+            //     // Recompile shaders
+            //     std::cout << "Recompiling shaders..." << std::endl;
+            //     // shader.recompile();
+            // }
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+            view = camera.getViewMatrix();
+            projection = camera.getProjectionMatrix();
+
+            shader.use();
+            shader.setUniform("view", view);
+            shader.setUniform("projection", projection);
+            glBindVertexArray(vao);
+            glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(indices.size()), GL_UNSIGNED_INT, nullptr);
+
+            glfwSwapBuffers(window);
+            glfwPollEvents();
+        }
+
+        glDeleteVertexArrays(1, &vao);
     }
-
-    glDeleteVertexArrays(1, &vao);
-    // glDeleteBuffers(1, &vbo);
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
