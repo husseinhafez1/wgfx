@@ -1,8 +1,5 @@
 #pragma once
 
-#include <tiny_obj_loader.h>
-#include <stb_image.h>
-
 #include <string>
 
 #include "buffer.h"
@@ -14,6 +11,13 @@ public:
 
     void draw() const;
 private:
+    struct MeshData;
+
+    explicit Model(MeshData&& meshData);
+    static MeshData loadModel(const std::string& path);
+    static MeshData loadObj(const std::string& path);
+    static MeshData loadGltf(const std::string& path);
+
     unsigned int vao;
     Buffer vbo;
     Buffer ebo;

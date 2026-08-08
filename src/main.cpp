@@ -54,7 +54,7 @@ int main() {
 
     {
         Shader shader("basic.vert.glsl", "basic.frag.glsl");
-        Model cow("cow/cow.obj");
+        Model cow("helmet/DamagedHelmet.glb");
 
         float lastFrameTime = 0.0f;
 
