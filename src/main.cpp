@@ -9,6 +9,7 @@
 #include "shader.h"
 #include "camera.h"
 #include "input.h"
+#include "buffer.h"
 
 Camera camera;
 Input input;
@@ -69,12 +70,18 @@ int main() {
 
     Shader shader("basic.vert.glsl", "basic.frag.glsl");
 
-    unsigned int vao, vbo;
+    unsigned int vao;
+    // unsigned int vbo;
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+    // glGenBuffers(1, &vbo);
+    // glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    // glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+    // glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    // glEnableVertexAttribArray(0);
+
+    Buffer vertexBuffer(BufferType::VertexBuffer, vertices.data(), vertices.size() * sizeof(float));
+    vertexBuffer.bind();
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
@@ -115,7 +122,7 @@ int main() {
     }
 
     glDeleteVertexArrays(1, &vao);
-    glDeleteBuffers(1, &vbo);
+    // glDeleteBuffers(1, &vbo);
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;
