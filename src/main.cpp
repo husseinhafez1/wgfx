@@ -5,10 +5,13 @@
 #include <iostream>
 #include <vector>
 #include <string>
+
 #include "shader.h"
 #include "camera.h"
+#include "input.h"
 
 Camera camera;
+Input input;
 
 void processInput(GLFWwindow* window, float deltaTime);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -91,7 +94,7 @@ int main() {
         float deltaTime = currentFrameTime - lastFrameTime;
         lastFrameTime = currentFrameTime;
         processInput(window, deltaTime);
-        // if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+        // if (input.onKeyPress(GLFW_KEY_R)) {
         //     // Recompile shaders
         //     std::cout << "Recompiling shaders..." << std::endl;
         //     // shader.recompile();
@@ -119,31 +122,32 @@ int main() {
 }
 
 void processInput(GLFWwindow* window, float deltaTime) {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    if (input.onKeyPress(GLFW_KEY_ESCAPE)) {
         glfwSetWindowShouldClose(window, true);
+    }
 
-    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+    if (input.onKeyPress(GLFW_KEY_R)) {
         // Recompile shaders
         std::cout << "Recompiling shaders..." << std::endl;
         // shader.recompile();
     }
 
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    if (input.onKeyPress(GLFW_KEY_W))
         camera.processInput(deltaTime, CameraMovement::FORWARD);
 
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    if (input.onKeyPress(GLFW_KEY_S))
         camera.processInput(deltaTime, CameraMovement::BACKWARD);
 
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    if (input.onKeyPress(GLFW_KEY_A))
         camera.processInput(deltaTime, CameraMovement::LEFT);
 
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    if (input.onKeyPress(GLFW_KEY_D))
         camera.processInput(deltaTime, CameraMovement::RIGHT);
 
-    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+    if (input.onKeyPress(GLFW_KEY_Q))
         camera.processInput(deltaTime, CameraMovement::UP);
 
-    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+    if (input.onKeyPress(GLFW_KEY_E))
         camera.processInput(deltaTime, CameraMovement::DOWN);
 }
 
