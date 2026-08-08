@@ -24,6 +24,7 @@ A small C++17 graphics library built with OpenGL, GLFW, GLAD, GLM, and CMake.
 ## Assets
 
 - [Sponza Optimized](https://github.com/toji/sponza-optimized)
+- [Lava Assets](https://github.com/Breush/lava-assets)
 
 ## Build
 
@@ -34,8 +35,10 @@ cmake --build build-clang
 
 ## Next
 
-- Add an ImGui interface
-- Create a reusable lighting system
-- Implement SSAO
-- Improve PBR and environment lighting
-- Add a Vulkan backend later
+- [ ] Add an ImGui interface
+- [ ] Create a reusable lighting system with multiple light types
+- [ ] Implement SSAO
+- [ ] Improve PBR and environment lighting
+- [ ] Add a Vulkan backend later
+- [ ] HDR
+- [ ] MSAA

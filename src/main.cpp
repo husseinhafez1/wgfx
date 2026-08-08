@@ -28,7 +28,7 @@ void processInput(GLFWwindow* window, float deltaTime);
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 int main() {
-    Window window("wgfx");
+    Window window("wgfx", 960, 720);
 
     glEnable(GL_DEPTH_TEST);
 
@@ -36,7 +36,7 @@ int main() {
         Shader shader("pbr.vert.glsl", "pbr.frag.glsl");
         Shader shadowShader("shadow.vert.glsl", "shadow.frag.glsl");
         ShadowMap shadowMap(2048, 2048);
-        Model sponza("sponza/Sponza.gltf");
+        Model sponza("sponza/sponza.glb");
         Model helmet("helmet/DamagedHelmet.glb");
         Skybox skybox({
             "skybox/right.jpg",
