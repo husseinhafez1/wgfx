@@ -3,6 +3,7 @@
 
 #include <glm/glm.hpp>
 #include <tiny_obj_loader.h>
+#include <stb_image.h>
 
 #include <algorithm>
 #include <iostream>
@@ -141,10 +142,13 @@ int main() {
             // }
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+            model = glm::rotate(model, glm::radians(20.0f * deltaTime), glm::vec3(0.0f, 1.0f, 0.0f));
+
             view = camera.getViewMatrix();
             projection = camera.getProjectionMatrix();
 
             shader.use();
+            shader.setUniform("model", model);
             shader.setUniform("view", view);
             shader.setUniform("projection", projection);
             glBindVertexArray(vao);

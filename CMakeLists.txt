@@ -14,6 +14,9 @@ target_include_directories(glm INTERFACE deps/glm)
 add_library(tinyobjloader STATIC deps/tinyobjloader/tiny_obj_loader.cc)
 target_include_directories(tinyobjloader PUBLIC deps/tinyobjloader)
 
+add_library(stb_image STATIC deps/stb/stb_image.cpp)
+target_include_directories(stb_image PUBLIC deps/stb)
+
 add_library(glfw STATIC IMPORTED)
 set_target_properties(glfw PROPERTIES
     IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/deps/glfw/lib-vc2022/glfw3.lib"
@@ -37,4 +40,4 @@ target_compile_definitions(wgfx PRIVATE
     SHADER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/res/shaders/"
     MODEL_DIR="${CMAKE_CURRENT_SOURCE_DIR}/res/models/"
 )
-target_link_libraries(wgfx PRIVATE glad glfw glm::glm tinyobjloader opengl32 gdi32 user32 shell32 winmm)
+target_link_libraries(wgfx PRIVATE glad glfw glm::glm tinyobjloader stb_image opengl32 gdi32 user32 shell32 winmm)
