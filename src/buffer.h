@@ -19,7 +19,7 @@ public:
     Buffer& operator=(Buffer&& other) noexcept;
     ~Buffer();
 
-    BufferType getType() const;
+    [[nodiscard]] BufferType getType() const;
     void bind() const;
     void unbind() const;
     void bindBase(unsigned int bindingPoint) const;
