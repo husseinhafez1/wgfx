@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstdint>
+#include <cmath>
 #include <filesystem>
 #include <iostream>
 #include <stdexcept>
@@ -223,7 +224,7 @@ Model::MeshData Model::loadGltf(const std::string& path) {
         fastgltf::Options::LoadExternalImages |
         fastgltf::Options::GenerateMeshIndices;
 
-    fastgltf::Parser parser;
+    fastgltf::Parser parser(fastgltf::Extensions::KHR_texture_transform);
     auto loadedAsset = parser.loadGltf(gltfFile.get(), fullPath.parent_path(), options);
     if (loadedAsset.error() != fastgltf::Error::None) {
         throw std::runtime_error(
@@ -288,6 +289,20 @@ Model::MeshData Model::loadGltf(const std::string& path) {
         if (gltfMaterial.pbrData.baseColorTexture.has_value()) {
             const auto& textureInfo = gltfMaterial.pbrData.baseColorTexture.value();
             material.uvSet = textureInfo.texCoordIndex;
+            if (textureInfo.transform) {
+                material.uvOffset = glm::vec2(
+                    textureInfo.transform->uvOffset.x(),
+                    textureInfo.transform->uvOffset.y()
+                );
+                material.uvScale = glm::vec2(
+                    textureInfo.transform->uvScale.x(),
+                    textureInfo.transform->uvScale.y()
+                );
+                material.uvRotation = textureInfo.transform->rotation;
+                if (textureInfo.transform->texCoordIndex.has_value()) {
+                    material.uvSet = textureInfo.transform->texCoordIndex.value();
+                }
+            }
             if (textureInfo.textureIndex < asset.textures.size()) {
                 const fastgltf::Texture& gltfTexture = asset.textures[textureInfo.textureIndex];
                 if (gltfTexture.imageIndex.has_value()
@@ -366,8 +381,13 @@ Model::MeshData Model::loadGltf(const std::string& path) {
                     asset,
                     uvAccessor,
                     [&](const fastgltf::math::fvec2& uv) {
-                        meshData.uvs.push_back(uv.x());
-                        meshData.uvs.push_back(uv.y());
+                        const Material& material = meshData.materials[materialIndex];
+                        const float cosine = std::cos(material.uvRotation);
+                        const float sine = std::sin(material.uvRotation);
+                        const float scaledU = uv.x() * material.uvScale.x;
+                        const float scaledV = uv.y() * material.uvScale.y;
+                        meshData.uvs.push_back(material.uvOffset.x + cosine * scaledU - sine * scaledV);
+                        meshData.uvs.push_back(material.uvOffset.y + sine * scaledU + cosine * scaledV);
                     }
                 );
             } else {

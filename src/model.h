@@ -22,6 +22,9 @@ private:
         glm::vec4 baseColor{1.0f};
         std::shared_ptr<Texture> baseColorTexture;
         std::size_t uvSet = 0;
+        glm::vec2 uvOffset{0.0f};
+        glm::vec2 uvScale{1.0f};
+        float uvRotation = 0.0f;
     };
 
     struct Submesh {

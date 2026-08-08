@@ -52,9 +52,9 @@ int main() {
 
     glEnable(GL_DEPTH_TEST);
 
-    {
+    try {
         Shader shader("basic.vert.glsl", "basic.frag.glsl");
-        Model cow("cow/cow.obj");
+        Model cow("patchwork_holstein_cow/source/Patchwork_Holstein_Cow.glb");
 
         float lastFrameTime = 0.0f;
 
@@ -94,6 +94,11 @@ int main() {
             glfwSwapBuffers(window);
             glfwPollEvents();
         }
+    } catch (const std::exception& exception) {
+        std::cerr << "Application error: " << exception.what() << '\n';
+        glfwDestroyWindow(window);
+        glfwTerminate();
+        return -1;
     }
     glfwDestroyWindow(window);
     glfwTerminate();
