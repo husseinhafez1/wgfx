@@ -1,6 +1,6 @@
 # wgfx
 
-A small C++17 graphics renderer built with OpenGL, GLFW, GLAD, GLM, and CMake.
+A small C++17 graphics library built with OpenGL, GLFW, GLAD, GLM, and CMake.
 
 ![Sponza and helmet render](images/sponza_helmet.png)
 
