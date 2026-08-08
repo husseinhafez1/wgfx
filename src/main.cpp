@@ -19,6 +19,7 @@
 #include "model.h"
 #include "skybox.h"
 #include "window.h"
+#include "shadow_map.h"
 
 Camera camera;
 Input input;
@@ -33,6 +34,8 @@ int main() {
 
     try {
         Shader shader("pbr.vert.glsl", "pbr.frag.glsl");
+        Shader shadowShader("shadow.vert.glsl", "shadow.frag.glsl");
+        ShadowMap shadowMap(2048, 2048);
         Model sponza("sponza/Sponza.gltf");
         Model helmet("helmet/DamagedHelmet.glb");
         Skybox skybox({
@@ -47,18 +50,30 @@ int main() {
         float lastFrameTime = 0.0f;
 
         const glm::mat4 sponzaModel(1.0f);
-        const glm::mat4 helmetModel = glm::translate(
-            glm::mat4(1.0f),
-            glm::vec3(0.0f, 3.0f, 0.0f)
+        const glm::mat4 helmetModel = glm::rotate(
+            glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 3.0f, 0.0f)),
+            glm::radians(90.0f),
+            glm::vec3(0.0f, 1.0f, 0.0f)
         );
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 projection = camera.getProjectionMatrix();
+        const glm::vec3 lightDirection = glm::normalize(glm::vec3(-1.0f, -0.55f, 0.25f));
+        const glm::vec3 lightTarget(0.0f, 1.5f, 0.0f);
+        const glm::mat4 lightView = glm::lookAt(
+            lightTarget - lightDirection * 30.0f,
+            lightTarget,
+            glm::vec3(0.0f, 1.0f, 0.0f)
+        );
+        const glm::mat4 lightProjection = glm::ortho(-21.0f, 21.0f, -15.0f, 15.0f, 0.1f, 70.0f);
+        const glm::mat4 lightSpaceMatrix = lightProjection * lightView;
 
         shader.use();
         shader.setUniform("view", view);
         shader.setUniform("projection", projection);
         shader.setUniform("environmentMap", 1);
-        shader.setUniform("lightDirection", glm::vec3(-1.0f, -0.55f, 0.25f));
+        shader.setUniform("shadowMap", 3);
+        shader.setUniform("lightSpaceMatrix", lightSpaceMatrix);
+        shader.setUniform("lightDirection", lightDirection);
         shader.setUniform("lightColor", glm::vec3(4.0f));
 
         while (!glfwWindowShouldClose(window.get())) {
@@ -71,16 +86,28 @@ int main() {
             //     std::cout << "Recompiling shaders..." << std::endl;
             //     // shader.recompile();
             // }
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
             view = camera.getViewMatrix();
             projection = camera.getProjectionMatrix();
+
+            shadowMap.bindForWriting();
+            glClear(GL_DEPTH_BUFFER_BIT);
+            shadowShader.use();
+            shadowShader.setUniform("lightSpaceMatrix", lightSpaceMatrix);
+            shadowShader.setUniform("model", sponzaModel);
+            sponza.draw(shadowShader);
+            shadowShader.setUniform("model", helmetModel);
+            helmet.draw(shadowShader);
+
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            glViewport(0, 0, window.getWidth(), window.getHeight());
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             
             shader.use();
             shader.setUniform("view", view);
             shader.setUniform("projection", projection);
             shader.setUniform("cameraPosition", camera.getPosition());
             skybox.bind(1);
+            shadowMap.bind(3);
 
             shader.setUniform("model", sponzaModel);
             sponza.draw(shader);
