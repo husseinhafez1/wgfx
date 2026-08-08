@@ -17,7 +17,6 @@
 #include "buffer.h"
 #include "model.h"
 #include "skybox.h"
-#include "skybox.h"
 
 Camera camera;
 Input input;
@@ -56,7 +55,7 @@ int main() {
 
     try {
         Shader shader("basic.vert.glsl", "basic.frag.glsl");
-        Model cow("patchwork_holstein_cow/source/Patchwork_Holstein_Cow.glb");
+        Model cow("helmet/DamagedHelmet.glb");
         Skybox skybox({
             "skybox/right.jpg",
             "skybox/left.jpg",
