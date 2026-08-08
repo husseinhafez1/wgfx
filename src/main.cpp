@@ -130,28 +130,28 @@ void processInput(GLFWwindow* window, float deltaTime) {
         glfwSetWindowShouldClose(window, true);
     }
 
-    if (input.onKeyPress(GLFW_KEY_R)) {
+    if (input.onKeyRelease(GLFW_KEY_R)) {
         // Recompile shaders
         std::cout << "Recompiling shaders..." << std::endl;
         // shader.recompile();
     }
 
-    if (input.onKeyPress(GLFW_KEY_W))
+    if (input.onKeyHold(GLFW_KEY_W))
         camera.processInput(deltaTime, CameraMovement::FORWARD);
 
-    if (input.onKeyPress(GLFW_KEY_S))
+    if (input.onKeyHold(GLFW_KEY_S))
         camera.processInput(deltaTime, CameraMovement::BACKWARD);
 
-    if (input.onKeyPress(GLFW_KEY_A))
+    if (input.onKeyHold(GLFW_KEY_A))
         camera.processInput(deltaTime, CameraMovement::LEFT);
 
-    if (input.onKeyPress(GLFW_KEY_D))
+    if (input.onKeyHold(GLFW_KEY_D))
         camera.processInput(deltaTime, CameraMovement::RIGHT);
 
-    if (input.onKeyPress(GLFW_KEY_Q))
+    if (input.onKeyHold(GLFW_KEY_Q))
         camera.processInput(deltaTime, CameraMovement::UP);
 
-    if (input.onKeyPress(GLFW_KEY_E))
+    if (input.onKeyHold(GLFW_KEY_E))
         camera.processInput(deltaTime, CameraMovement::DOWN);
 
     if (input.onButtonHold(GLFW_MOUSE_BUTTON_LEFT)) {
