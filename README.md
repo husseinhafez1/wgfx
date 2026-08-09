@@ -4,7 +4,7 @@ A small C++17 graphics library built with OpenGL, GLFW, GLAD, GLM, and CMake.
 
 ![Sponza and helmet render](images/sponza_helmet.png)
 ![Sponza and helmet spotlight render](images/sponza_helmet_spot.png)
-![Sponza and helmet spotlight and point-light render](images/sponza_helmet_spot_point.png)
+![Sponza and helmet spotlight and point-light render](images/sponza_helmet_point.png)
 
 ## Current Features
 
