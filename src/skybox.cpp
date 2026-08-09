@@ -8,6 +8,8 @@
 #include <stdexcept>
 #include <vector>
 
+namespace wgfx {
+
 namespace {
 constexpr float skyboxVertices[] = {
     -1.0f,  1.0f, -1.0f,  -1.0f, -1.0f, -1.0f,   1.0f, -1.0f, -1.0f,
@@ -208,3 +210,5 @@ void Skybox::draw(const glm::mat4& view, const glm::mat4& projection) {
     glDepthMask(previousDepthMask);
     glDepthFunc(previousDepthFunction);
 }
+
+} // namespace wgfx

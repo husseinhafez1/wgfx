@@ -6,6 +6,8 @@
 #include <string>
 #include <iostream>
 
+namespace wgfx {
+
 class Window {
 public:
     Window(std::string title = "window", int width = 800, int height = 600);
@@ -27,3 +29,5 @@ private:
     bool vsyncEnabled = false;
     static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 };
+
+} // namespace wgfx

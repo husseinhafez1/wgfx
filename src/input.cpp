@@ -1,5 +1,7 @@
 #include "input.h"
 
+namespace wgfx {
+
 bool Input::keys[1024]{};
 bool Input::mouseButtons[GLFW_MOUSE_BUTTON_LAST + 1]{};
 
@@ -65,3 +67,5 @@ bool Input::onButtonHold(int button) const {
     return button >= 0 && button <= GLFW_MOUSE_BUTTON_LAST
         && glfwGetMouseButton(glfwGetCurrentContext(), button) == GLFW_PRESS;
 }
+
+} // namespace wgfx

@@ -5,6 +5,8 @@
 #include <cstddef>
 #include <stdexcept>
 
+namespace wgfx {
+
 enum class BufferType {
     VertexBuffer,
     IndexBuffer,
@@ -35,3 +37,5 @@ private:
     unsigned int bufferId;
     BufferType type;
 };
+
+} // namespace wgfx

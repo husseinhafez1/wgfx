@@ -19,6 +19,8 @@
 #include <utility>
 #include <vector>
 
+namespace wgfx {
+
 namespace {
 unsigned int createVertexArray() {
     unsigned int vao;
@@ -553,3 +555,5 @@ void Model::drawDepth() const {
         nullptr
     );
 }
+
+} // namespace wgfx

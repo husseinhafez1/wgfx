@@ -44,38 +44,38 @@ target_link_libraries(imgui PUBLIC glfw)
 target_compile_features(imgui PUBLIC cxx_std_17)
 
 add_executable(wgfx
-    src/main.cpp
+    main.cpp
     src/shader.cpp
-    src/shader.h
+    include/shader.h
     src/camera.cpp
-    src/camera.h
+    include/camera.h
     src/input.cpp
-    src/input.h
+    include/input.h
     src/buffer.cpp
-    src/buffer.h
+    include/buffer.h
     src/model.cpp
-    src/model.h
+    include/model.h
     src/texture.cpp
-    src/texture.h
+    include/texture.h
     src/skybox.cpp
-    src/skybox.h
+    include/skybox.h
     src/window.cpp
-    src/window.h
+    include/window.h
     src/directional_shadow_map.cpp
-    src/directional_shadow_map.h
+    include/directional_shadow_map.h
     src/lighting.cpp
-    src/lighting.h
+    include/lighting.h
     src/spot_shadow_map.cpp
-    src/spot_shadow_map.h
+    include/spot_shadow_map.h
     src/point_shadow_map.cpp
-    src/point_shadow_map.h
+    include/point_shadow_map.h
     src/renderer.cpp
-    src/renderer.h
+    include/renderer.h
     src/imgui_layer.cpp
-    src/imgui_layer.h
+    include/imgui_layer.h
 )
 target_compile_features(wgfx PRIVATE cxx_std_17)
-target_include_directories(wgfx PRIVATE src)
+target_include_directories(wgfx PRIVATE include)
 target_compile_definitions(wgfx PRIVATE
     SHADER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/res/shaders/"
     MODEL_DIR="${CMAKE_CURRENT_SOURCE_DIR}/res/models/"

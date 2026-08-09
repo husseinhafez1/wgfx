@@ -32,6 +32,7 @@ uniform mat4 view;
 
 uniform bool hasDirectionalLight;
 uniform DirectionalLight directionalLight;
+uniform bool directionalShadowEnabled;
 uniform sampler2DArrayShadow shadowMap;
 uniform int cascadeCount;
 uniform float cascadePlaneDistances[MAX_CASCADES];
@@ -122,9 +123,9 @@ float sampleDirectionalShadowLayer(int layer, vec3 normal, vec3 light) {
     vec2 texelSize = 1.0 / vec2(textureSize(shadowMap, 0).xy);
     float visibility = 0.0;
     float totalWeight = 0.0;
-    for (int x = -2; x <= 2; ++x) {
-        for (int y = -2; y <= 2; ++y) {
-            float weight = float(3 - abs(x)) * float(3 - abs(y));
+    for (int x = -1; x <= 1; ++x) {
+        for (int y = -1; y <= 1; ++y) {
+            float weight = float(2 - abs(x)) * float(2 - abs(y));
             visibility += weight * texture(
                 shadowMap,
                 vec4(projected.xy + vec2(x, y) * texelSize, float(layer), projected.z - bias)
@@ -234,7 +235,9 @@ vec3 calculateDirectLighting(
     vec3 direct = vec3(0.0);
     if (hasDirectionalLight) {
         vec3 light = normalize(-directionalLight.direction);
-        float shadow = calculateDirectionalShadow(normal, light);
+        float shadow = directionalShadowEnabled
+            ? calculateDirectionalShadow(normal, light)
+            : 0.0;
         direct += (1.0 - shadow) * evaluateLight(
             light, directionalLight.color * directionalLight.intensity,
             normal, viewDirection, albedo, surfaceMetallic, surfaceRoughness, reflectance

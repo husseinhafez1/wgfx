@@ -18,7 +18,7 @@ A small C++17 graphics library built with OpenGL, GLFW, GLAD, GLM, and CMake.
 - Hardware-filtered PCF shadow sampling
 - Hybrid static and dynamic shadow-map rendering
 - Reusable GLSL lighting code through relative shader includes
-- Dockable Dear ImGui renderer settings and runtime VSync control
+- Dockable Dear ImGui controls for lights, performance, and runtime VSync
 - Camera and input controls
 
 ## Dependencies
@@ -44,6 +44,15 @@ cmake -S . -B build-clang -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER
 cmake --build build-clang
 .\build-clang\wgfx.exe
 ```
+
+## Project Layout
+
+- `include/`: Public C++ headers
+- `src/`: C++ implementation files
+- `res/shaders/`: GLSL shaders and shared shader includes
+- `main.cpp`: Application entry point
+
+All library-owned C++ APIs are declared in the `wgfx` namespace.
 
 ## Controls
 

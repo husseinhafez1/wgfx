@@ -8,6 +8,8 @@
 
 #include "buffer.h"
 
+namespace wgfx {
+
 class Shader;
 class Texture;
 
@@ -54,3 +56,5 @@ private:
     std::vector<Material> materials;
     std::vector<Submesh> submeshes;
 };
+
+} // namespace wgfx

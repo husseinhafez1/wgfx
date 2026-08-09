@@ -5,6 +5,8 @@
 #include <limits>
 #include <stdexcept>
 
+namespace wgfx {
+
 Texture::Texture(const std::string& path) {
     int width;
     int height;
@@ -71,3 +73,5 @@ void Texture::bind(unsigned int slot) const {
 void Texture::unbind() const {
     glBindTexture(GL_TEXTURE_2D, 0);
 }
+
+} // namespace wgfx

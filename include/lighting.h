@@ -2,7 +2,10 @@
 
 #include <glm/glm.hpp>
 
+#include <cstddef>
 #include <vector>
+
+namespace wgfx {
 
 class Shader;
 
@@ -38,8 +41,16 @@ public:
     void clearDirectionalLight();
     void addPointLight(const PointLight& light);
     void addSpotLight(const SpotLight& light);
+    void removePointLight(std::size_t index);
+    void removeSpotLight(std::size_t index);
     void clearPointLights();
     void clearSpotLights();
+    [[nodiscard]] bool hasDirectional() const;
+    [[nodiscard]] DirectionalLight& getDirectionalLight();
+    [[nodiscard]] std::vector<PointLight>& getPointLights();
+    [[nodiscard]] std::vector<SpotLight>& getSpotLights();
+    [[nodiscard]] const std::vector<PointLight>& getPointLights() const;
+    [[nodiscard]] const std::vector<SpotLight>& getSpotLights() const;
     void upload(Shader& shader) const;
 
 private:
@@ -48,3 +59,5 @@ private:
     std::vector<PointLight> pointLights;
     std::vector<SpotLight> spotLights;
 };
+
+} // namespace wgfx

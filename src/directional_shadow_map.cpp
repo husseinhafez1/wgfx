@@ -9,6 +9,8 @@
 #include <limits>
 #include <stdexcept>
 
+namespace wgfx {
+
 namespace {
 glm::vec3 transformPoint(const glm::mat4& matrix, const glm::vec3& point) {
     const glm::vec4 transformed = matrix * glm::vec4(point, 1.0f);
@@ -237,3 +239,5 @@ const std::vector<float>& DirectionalShadowMap::getCascadeDepthRanges() const {
 const std::vector<glm::mat4>& DirectionalShadowMap::getLightSpaceMatrices() const {
     return lightSpaceMatrices;
 }
+
+} // namespace wgfx

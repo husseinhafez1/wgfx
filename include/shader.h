@@ -6,6 +6,8 @@
 #include <string>
 #include <unordered_map>
 
+namespace wgfx {
+
 class Shader {
 public:
     Shader(const char* vertexPath, const char* fragmentPath);
@@ -28,3 +30,5 @@ private:
     std::string readShaderSource(const std::string& filePath) const;
     void checkCompileErrors(unsigned int shader, const std::string& type) const;
 };
+
+} // namespace wgfx

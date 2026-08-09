@@ -4,6 +4,8 @@
 
 #include <vector>
 
+namespace wgfx {
+
 class DirectionalShadowMap {
 public:
     static constexpr int MaxCascades = 8;
@@ -40,3 +42,5 @@ private:
     std::vector<float> cascadeDepthRanges;
     std::vector<glm::mat4> lightSpaceMatrices;
 };
+
+} // namespace wgfx

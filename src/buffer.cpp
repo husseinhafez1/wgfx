@@ -1,5 +1,7 @@
 #include "buffer.h"
 
+namespace wgfx {
+
 Buffer::Buffer(BufferType type, const void* data, std::size_t size)
     : size(0), bufferId(0), type(type) {
     glGenBuffers(1, &bufferId);
@@ -90,3 +92,5 @@ void Buffer::updateData(const void* data, std::size_t size, std::size_t offset) 
         data
     );
 }
+
+} // namespace wgfx

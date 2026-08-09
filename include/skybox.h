@@ -7,6 +7,8 @@
 
 #include "shader.h"
 
+namespace wgfx {
+
 class Skybox {
 public:
     // Loads a single 4x3 horizontal-cross cubemap image.
@@ -32,3 +34,5 @@ private:
     unsigned int vbo = 0;
     unsigned int cubemap = 0;
 };
+
+} // namespace wgfx

@@ -6,6 +6,8 @@
 #include <stdexcept>
 #include <string>
 
+namespace wgfx {
+
 void Lighting::setDirectionalLight(const DirectionalLight& light) {
     directionalLight = light;
     hasDirectionalLight = true;
@@ -29,12 +31,53 @@ void Lighting::addSpotLight(const SpotLight& light) {
     spotLights.push_back(light);
 }
 
+void Lighting::removePointLight(std::size_t index) {
+    if (index >= pointLights.size()) {
+        throw std::out_of_range("Point light index is out of range.");
+    }
+    pointLights.erase(pointLights.begin() + static_cast<std::ptrdiff_t>(index));
+}
+
+void Lighting::removeSpotLight(std::size_t index) {
+    if (index >= spotLights.size()) {
+        throw std::out_of_range("Spot light index is out of range.");
+    }
+    spotLights.erase(spotLights.begin() + static_cast<std::ptrdiff_t>(index));
+}
+
 void Lighting::clearPointLights() {
     pointLights.clear();
 }
 
 void Lighting::clearSpotLights() {
     spotLights.clear();
+}
+
+bool Lighting::hasDirectional() const {
+    return hasDirectionalLight;
+}
+
+DirectionalLight& Lighting::getDirectionalLight() {
+    if (!hasDirectionalLight) {
+        throw std::logic_error("No directional light is configured.");
+    }
+    return directionalLight;
+}
+
+std::vector<PointLight>& Lighting::getPointLights() {
+    return pointLights;
+}
+
+std::vector<SpotLight>& Lighting::getSpotLights() {
+    return spotLights;
+}
+
+const std::vector<PointLight>& Lighting::getPointLights() const {
+    return pointLights;
+}
+
+const std::vector<SpotLight>& Lighting::getSpotLights() const {
+    return spotLights;
 }
 
 void Lighting::upload(Shader& shader) const {
@@ -69,3 +112,5 @@ void Lighting::upload(Shader& shader) const {
         shader.setUniform(prefix + "outerConeCos", std::cos(glm::radians(light.outerConeAngle)));
     }
 }
+
+} // namespace wgfx

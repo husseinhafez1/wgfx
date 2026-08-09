@@ -1,11 +1,11 @@
-#include "renderer.h"
+#include <renderer.h>
 
 #include <exception>
 #include <iostream>
 
 int main() {
     try {
-        Renderer renderer;
+        wgfx::Renderer renderer;
         renderer.init();
         renderer.run();
     } catch (const std::exception& exception) {

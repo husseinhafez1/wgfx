@@ -2,6 +2,8 @@
 
 #include <GLFW/glfw3.h>
 
+namespace wgfx {
+
 class Input {
 public:
     Input();
@@ -16,3 +18,5 @@ private:
     static bool keys[1024];
     static bool mouseButtons[GLFW_MOUSE_BUTTON_LAST + 1];
 };
+
+} // namespace wgfx

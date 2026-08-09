@@ -4,6 +4,8 @@
 
 #include <array>
 
+namespace wgfx {
+
 struct PointLight;
 
 class PointShadowMap {
@@ -30,3 +32,5 @@ private:
     float farPlane = 1.0f;
     std::array<glm::mat4, 6> lightSpaceMatrices{};
 };
+
+} // namespace wgfx

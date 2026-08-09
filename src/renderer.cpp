@@ -5,6 +5,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "camera.h"
+#include "directional_shadow_map.h"
 #include "input.h"
 #include "imgui_layer.h"
 #include "lighting.h"
@@ -17,6 +18,9 @@
 
 #include <array>
 #include <stdexcept>
+#include <string>
+
+namespace wgfx {
 
 Renderer::Renderer() = default;
 
@@ -68,6 +72,7 @@ void Renderer::init() {
         "skybox/front.jpg",
         "skybox/back.jpg"
     });
+    directionalShadowMap = std::make_unique<DirectionalShadowMap>(1024, 1024, 3);
 
     const glm::vec3 helmetPosition(0.0f, 3.0f, 0.0f);
     helmetModel = glm::rotate(
@@ -140,13 +145,35 @@ void Renderer::configurePbrShader() {
     shader.setUniform("view", camera->getViewMatrix());
     shader.setUniform("projection", camera->getProjectionMatrix());
     shader.setUniform("environmentMap", 1);
+    shader.setUniform("directionalShadowEnabled", 0);
+    shader.setUniform("shadowMap", 5);
     shader.setUniform("spotShadowMap", 3);
-    shader.setUniform("spotShadowLightIndex", 0);
+    shader.setUniform(
+        "spotShadowLightIndex",
+        lighting->getSpotLights().empty() ? -1 : 0
+    );
     shader.setUniform("spotLightSpaceMatrix", spotShadowMap->getLightSpaceMatrix());
     shader.setUniform("pointShadowMap", 4);
-    shader.setUniform("pointShadowLightIndex", 0);
+    shader.setUniform(
+        "pointShadowLightIndex",
+        lighting->getPointLights().empty() ? -1 : 0
+    );
     shader.setUniform("pointShadowFarPlane", pointShadowMap->getFarPlane());
     lighting->upload(shader);
+}
+
+void Renderer::updateShadowMaps() {
+    if (!lighting->getSpotLights().empty()) {
+        const SpotLight& light = lighting->getSpotLights().front();
+        staticSpotShadowMap->update(light);
+        spotShadowMap->update(light);
+    }
+    if (!lighting->getPointLights().empty()) {
+        const PointLight& light = lighting->getPointLights().front();
+        staticPointShadowMap->update(light);
+        pointShadowMap->update(light);
+    }
+    renderStaticShadowMaps();
 }
 
 void Renderer::processInput(float deltaTime) {
@@ -199,13 +226,19 @@ void Renderer::processInput(float deltaTime) {
 }
 
 void Renderer::renderFrame(const glm::mat4& view, const glm::mat4& projection) {
-    spotShadowMap->copyFrom(*staticSpotShadowMap);
-    pointShadowMap->copyFrom(*staticPointShadowMap);
-
     glEnable(GL_POLYGON_OFFSET_FILL);
     glPolygonOffset(2.0f, 4.0f);
-    renderSpotShadowMap();
-    renderPointShadowMap();
+    if (lighting->hasDirectional()) {
+        renderDirectionalShadowMap(view, projection);
+    }
+    if (!lighting->getSpotLights().empty()) {
+        spotShadowMap->copyFrom(*staticSpotShadowMap);
+        renderSpotShadowMap();
+    }
+    if (!lighting->getPointLights().empty()) {
+        pointShadowMap->copyFrom(*staticPointShadowMap);
+        renderPointShadowMap();
+    }
     glDisable(GL_POLYGON_OFFSET_FILL);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -220,14 +253,61 @@ void Renderer::renderFrame(const glm::mat4& view, const glm::mat4& projection) {
     skybox->bind(1);
     spotShadowMap->bind(3);
     pointShadowMap->bind(4);
+    if (lighting->hasDirectional()) {
+        directionalShadowMap->bind(5);
+    }
     drawScene(shader);
     skybox->draw(view, projection);
 }
 
+void Renderer::renderDirectionalShadowMap(
+    const glm::mat4& view,
+    const glm::mat4& projection
+) {
+    directionalShadowMap->updateCascades(
+        view,
+        projection,
+        camera->getNearPlane(),
+        camera->getFarPlane(),
+        lighting->getDirectionalLight().direction
+    );
+
+    Shader& depthShader = getShader(ShaderType::Shadow);
+    depthShader.use();
+    const auto& lightSpaceMatrices = directionalShadowMap->getLightSpaceMatrices();
+    for (int cascade = 0; cascade < directionalShadowMap->getCascadeCount(); ++cascade) {
+        directionalShadowMap->bindLayerForWriting(cascade);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        depthShader.setUniform("lightSpaceMatrix", lightSpaceMatrices[cascade]);
+        drawDepthModel(depthShader, ModelType::Sponza, sponzaModel);
+        drawDepthModel(depthShader, ModelType::DamagedHelmet, helmetModel);
+    }
+
+    Shader& pbrShader = getShader(ShaderType::Pbr);
+    pbrShader.use();
+    pbrShader.setUniform("directionalShadowEnabled", 1);
+    pbrShader.setUniform("cascadeCount", directionalShadowMap->getCascadeCount());
+    const auto& cascadeDistances = directionalShadowMap->getCascadeDistances();
+    const auto& cascadeDepthRanges = directionalShadowMap->getCascadeDepthRanges();
+    for (int cascade = 0; cascade < directionalShadowMap->getCascadeCount(); ++cascade) {
+        const std::string index = std::to_string(cascade);
+        pbrShader.setUniform("lightSpaceMatrices[" + index + "]", lightSpaceMatrices[cascade]);
+        pbrShader.setUniform("cascadePlaneDistances[" + index + "]", cascadeDistances[cascade]);
+        pbrShader.setUniform("cascadeDepthRanges[" + index + "]", cascadeDepthRanges[cascade]);
+    }
+}
+
 void Renderer::renderGui() {
     bool vsyncEnabled = window->isVSyncEnabled();
-    if (gui->drawRendererPanel(vsyncEnabled)) {
+    const ImGuiLayerChanges changes = gui->drawRendererPanel(vsyncEnabled, *lighting);
+    if (changes.vsyncChanged) {
         window->setVSync(vsyncEnabled);
+    }
+    if (changes.shadowConfigurationChanged) {
+        updateShadowMaps();
+    }
+    if (changes.lightingChanged) {
+        configurePbrShader();
     }
     gui->endFrame();
 }
@@ -236,25 +316,29 @@ void Renderer::renderStaticShadowMaps() {
     glEnable(GL_POLYGON_OFFSET_FILL);
     glPolygonOffset(2.0f, 4.0f);
 
-    staticSpotShadowMap->bindForWriting();
-    glClear(GL_DEPTH_BUFFER_BIT);
-    Shader& spotShader = getShader(ShaderType::Shadow);
-    spotShader.use();
-    spotShader.setUniform("lightSpaceMatrix", staticSpotShadowMap->getLightSpaceMatrix());
-    drawDepthModel(spotShader, ModelType::Sponza, sponzaModel);
-
-    Shader& pointShader = getShader(ShaderType::PointShadow);
-    pointShader.use();
-    pointShader.setUniform("lightPosition", staticPointShadowMap->getLightPosition());
-    pointShader.setUniform("farPlane", staticPointShadowMap->getFarPlane());
-    for (int face = 0; face < 6; ++face) {
-        staticPointShadowMap->bindFaceForWriting(face);
+    if (!lighting->getSpotLights().empty()) {
+        staticSpotShadowMap->bindForWriting();
         glClear(GL_DEPTH_BUFFER_BIT);
-        pointShader.setUniform(
-            "lightSpaceMatrix",
-            staticPointShadowMap->getLightSpaceMatrix(face)
-        );
-        drawDepthModel(pointShader, ModelType::Sponza, sponzaModel);
+        Shader& spotShader = getShader(ShaderType::Shadow);
+        spotShader.use();
+        spotShader.setUniform("lightSpaceMatrix", staticSpotShadowMap->getLightSpaceMatrix());
+        drawDepthModel(spotShader, ModelType::Sponza, sponzaModel);
+    }
+
+    if (!lighting->getPointLights().empty()) {
+        Shader& pointShader = getShader(ShaderType::PointShadow);
+        pointShader.use();
+        pointShader.setUniform("lightPosition", staticPointShadowMap->getLightPosition());
+        pointShader.setUniform("farPlane", staticPointShadowMap->getFarPlane());
+        for (int face = 0; face < 6; ++face) {
+            staticPointShadowMap->bindFaceForWriting(face);
+            glClear(GL_DEPTH_BUFFER_BIT);
+            pointShader.setUniform(
+                "lightSpaceMatrix",
+                staticPointShadowMap->getLightSpaceMatrix(face)
+            );
+            drawDepthModel(pointShader, ModelType::Sponza, sponzaModel);
+        }
     }
 
     glDisable(GL_POLYGON_OFFSET_FILL);
@@ -292,3 +376,5 @@ void Renderer::drawDepthModel(Shader& shader, ModelType type, const glm::mat4& t
     shader.setUniform("model", transform);
     getModel(type).drawDepth();
 }
+
+} // namespace wgfx

@@ -5,6 +5,8 @@
 #include <cstddef>
 #include <string>
 
+namespace wgfx {
+
 class Texture {
 public:
     Texture(const std::string& path);
@@ -22,3 +24,5 @@ private:
 
     unsigned int m_textureID = 0;
 };
+
+} // namespace wgfx

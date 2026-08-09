@@ -3,6 +3,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+namespace wgfx {
+
 enum class CameraMovement {
     FORWARD,
     BACKWARD,
@@ -50,3 +52,5 @@ private:
 
     void updateCameraVectors();
 };
+
+} // namespace wgfx

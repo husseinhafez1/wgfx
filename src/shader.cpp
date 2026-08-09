@@ -8,6 +8,8 @@
 #include <stdexcept>
 #include <vector>
 
+namespace wgfx {
+
 namespace {
 std::string readShaderFile(
     const std::filesystem::path& path,
@@ -195,3 +197,5 @@ void Shader::checkCompileErrors(unsigned int shader, const std::string& type) co
                   << infoLog << '\n';
     }
 }
+
+} // namespace wgfx

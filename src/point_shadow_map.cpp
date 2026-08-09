@@ -7,6 +7,8 @@
 
 #include <stdexcept>
 
+namespace wgfx {
+
 PointShadowMap::PointShadowMap(int resolution) : resolution(resolution) {
     if (resolution <= 0) {
         throw std::invalid_argument("Point shadow-map resolution must be positive.");
@@ -144,3 +146,5 @@ const glm::vec3& PointShadowMap::getLightPosition() const {
 float PointShadowMap::getFarPlane() const {
     return farPlane;
 }
+
+} // namespace wgfx

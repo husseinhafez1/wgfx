@@ -2,6 +2,16 @@
 
 struct GLFWwindow;
 
+namespace wgfx {
+
+class Lighting;
+
+struct ImGuiLayerChanges {
+    bool vsyncChanged = false;
+    bool lightingChanged = false;
+    bool shadowConfigurationChanged = false;
+};
+
 class ImGuiLayer {
 public:
     explicit ImGuiLayer(GLFWwindow* window);
@@ -11,8 +21,10 @@ public:
     ImGuiLayer& operator=(const ImGuiLayer&) = delete;
 
     void beginFrame();
-    bool drawRendererPanel(bool& vsyncEnabled);
+    ImGuiLayerChanges drawRendererPanel(bool& vsyncEnabled, Lighting& lighting);
     void endFrame();
     [[nodiscard]] bool wantsMouseCapture() const;
     [[nodiscard]] bool wantsKeyboardCapture() const;
 };
+
+} // namespace wgfx

@@ -1,5 +1,7 @@
 #include "window.h"
 
+namespace wgfx {
+
 Window::Window(std::string title, int width, int height) : width(width), height(height) {
     if (!glfwInit()) {
         std::cerr << "Failed to initialize GLFW" << std::endl;
@@ -72,3 +74,5 @@ void Window::pollEvents() {
     glfwSwapBuffers(window);
     glfwPollEvents();
 }
+
+} // namespace wgfx

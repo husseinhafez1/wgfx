@@ -5,7 +5,10 @@
 #include <memory>
 #include <unordered_map>
 
+namespace wgfx {
+
 class Camera;
+class DirectionalShadowMap;
 class Input;
 class ImGuiLayer;
 class Lighting;
@@ -42,10 +45,12 @@ private:
     Shader& getShader(ShaderType type);
     Model& getModel(ModelType type);
     void configurePbrShader();
+    void updateShadowMaps();
     void processInput(float deltaTime);
     void renderFrame(const glm::mat4& view, const glm::mat4& projection);
     void renderGui();
     void renderStaticShadowMaps();
+    void renderDirectionalShadowMap(const glm::mat4& view, const glm::mat4& projection);
     void renderSpotShadowMap();
     void renderPointShadowMap();
     void drawScene(Shader& shader);
@@ -60,6 +65,7 @@ private:
     std::unordered_map<ShaderType, std::unique_ptr<Shader>> shaders;
     std::unordered_map<ModelType, std::unique_ptr<Model>> models;
     std::unique_ptr<Skybox> skybox;
+    std::unique_ptr<DirectionalShadowMap> directionalShadowMap;
     std::unique_ptr<SpotShadowMap> staticSpotShadowMap;
     std::unique_ptr<SpotShadowMap> spotShadowMap;
     std::unique_ptr<PointShadowMap> staticPointShadowMap;
@@ -72,3 +78,5 @@ private:
     bool rotating = false;
     bool initialized = false;
 };
+
+} // namespace wgfx

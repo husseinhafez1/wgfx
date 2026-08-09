@@ -2,6 +2,8 @@
 
 #include <glm/glm.hpp>
 
+namespace wgfx {
+
 struct SpotLight;
 
 class SpotShadowMap {
@@ -24,3 +26,5 @@ private:
     int resolution;
     glm::mat4 lightSpaceMatrix{1.0f};
 };
+
+} // namespace wgfx

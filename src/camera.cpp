@@ -1,5 +1,7 @@
 #include "camera.h"
 
+namespace wgfx {
+
 Camera::Camera()
     : position(0.0f, 0.0f, 3.0f),
       front(0.0f, 0.0f, -1.0f),
@@ -94,3 +96,5 @@ void Camera::updateCameraVectors() {
     right = glm::normalize(glm::cross(front, worldUp));  // normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
     up    = glm::normalize(glm::cross(right, front));
 }
+
+} // namespace wgfx

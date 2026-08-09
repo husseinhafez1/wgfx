@@ -8,6 +8,8 @@
 #include <cmath>
 #include <stdexcept>
 
+namespace wgfx {
+
 SpotShadowMap::SpotShadowMap(int resolution) : resolution(resolution) {
     if (resolution <= 0) {
         throw std::invalid_argument("Spot shadow-map resolution must be positive.");
@@ -110,3 +112,5 @@ void SpotShadowMap::bind(unsigned int slot) const {
 const glm::mat4& SpotShadowMap::getLightSpaceMatrix() const {
     return lightSpaceMatrix;
 }
+
+} // namespace wgfx
