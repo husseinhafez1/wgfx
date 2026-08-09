@@ -1,6 +1,55 @@
 #include "shader.h"
 
+#include <algorithm>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <sstream>
+#include <stdexcept>
+#include <vector>
+
+namespace {
+std::string readShaderFile(
+    const std::filesystem::path& path,
+    std::vector<std::filesystem::path>& includeStack
+) {
+    const std::filesystem::path normalizedPath = path.lexically_normal();
+    if (std::find(includeStack.begin(), includeStack.end(), normalizedPath) != includeStack.end()) {
+        throw std::runtime_error("Shader include cycle at '" + normalizedPath.string() + "'.");
+    }
+
+    std::ifstream file(normalizedPath);
+    if (!file.is_open()) {
+        throw std::runtime_error("Failed to open shader file '" + normalizedPath.string() + "'.");
+    }
+
+    includeStack.push_back(normalizedPath);
+    std::stringstream source;
+    std::string line;
+    while (std::getline(file, line)) {
+        const std::size_t directive = line.find("#include");
+        if (directive != std::string::npos && line.find_first_not_of(" \t") == directive) {
+            const std::size_t openingQuote = line.find('"', directive);
+            if (openingQuote == std::string::npos) {
+                throw std::runtime_error("Malformed shader include in '" + normalizedPath.string() + "'.");
+            }
+            const std::size_t closingQuote = line.find('"', openingQuote + 1);
+            if (closingQuote == std::string::npos) {
+                throw std::runtime_error("Malformed shader include in '" + normalizedPath.string() + "'.");
+            }
+            const std::filesystem::path includedPath = line.substr(
+                openingQuote + 1,
+                closingQuote - openingQuote - 1
+            );
+            source << readShaderFile(normalizedPath.parent_path() / includedPath, includeStack);
+        } else {
+            source << line << '\n';
+        }
+    }
+    includeStack.pop_back();
+    return source.str();
+}
+}
 
 Shader::Shader(const char* vertexPath, const char* fragmentPath) {
     this->vertexPath = vertexPath;
@@ -122,16 +171,8 @@ void Shader::recompile() {
 }
 
 std::string Shader::readShaderSource(const std::string& filePath) const {
-    const std::string fullPath = std::string(SHADER_DIR) + filePath;
-    std::ifstream shaderFile(fullPath);
-    if (!shaderFile.is_open()) {
-        std::cerr << "Failed to open shader file: " << fullPath << '\n';
-        return {};
-    }
-
-    std::stringstream shaderStream;
-    shaderStream << shaderFile.rdbuf();
-    return shaderStream.str();
+    std::vector<std::filesystem::path> includeStack;
+    return readShaderFile(std::filesystem::path(SHADER_DIR) / filePath, includeStack);
 }
 
 void Shader::checkCompileErrors(unsigned int shader, const std::string& type) const {

@@ -21,6 +21,7 @@
 #include "window.h"
 #include "lighting.h"
 #include "spot_shadow_map.h"
+#include "point_shadow_map.h"
 
 Camera camera;
 Input input;
@@ -36,7 +37,9 @@ int main() {
     try {
         Shader shader("pbr.vert.glsl", "pbr.frag.glsl");
         Shader shadowShader("shadow.vert.glsl", "shadow.frag.glsl");
+        Shader pointShadowShader("point_shadow.vert.glsl", "point_shadow.frag.glsl");
         SpotShadowMap spotShadowMap(2048);
+        PointShadowMap pointShadowMap(1024);
         Model sponza("sponza/sponza.glb");
         Model helmet("helmet/DamagedHelmet.glb");
         Skybox skybox({
@@ -51,25 +54,35 @@ int main() {
         float lastFrameTime = 0.0f;
 
         const glm::mat4 sponzaModel(1.0f);
+        const glm::vec3 helmetPosition(0.0f, 3.0f, 0.0f);
         const glm::mat4 helmetModel = glm::rotate(
-            glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 3.0f, 0.0f)),
+            glm::translate(glm::mat4(1.0f), helmetPosition),
             glm::radians(90.0f),
             glm::vec3(0.0f, 1.0f, 0.0f)
         );
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 projection = camera.getProjectionMatrix();
         Lighting lighting;
+        const glm::vec3 spotlightPosition = helmetPosition + glm::vec3(-5.0f, 0.0f, 0.0f);
         const SpotLight helmetSpotlight{
-            glm::vec3(0.0f, 8.0f, 0.0f),
-            glm::vec3(0.0f, -1.0f, 0.0f),
+            spotlightPosition,
+            glm::normalize(helmetPosition - spotlightPosition),
             glm::vec3(1.0f),
             150.0f,
             15.0f,
             25.0f,
             35.0f
         };
+        const PointLight helmetPointLight{
+            glm::vec3(2.0f, 3.0f, 0.0f),
+            glm::vec3(1.0f, 0.85f, 0.7f),
+            120.0f,
+            15.0f
+        };
         lighting.addSpotLight(helmetSpotlight);
+        lighting.addPointLight(helmetPointLight);
         spotShadowMap.update(helmetSpotlight);
+        pointShadowMap.update(helmetPointLight);
 
         shader.use();
         shader.setUniform("view", view);
@@ -78,6 +91,9 @@ int main() {
         shader.setUniform("spotShadowMap", 3);
         shader.setUniform("spotShadowLightIndex", 0);
         shader.setUniform("spotLightSpaceMatrix", spotShadowMap.getLightSpaceMatrix());
+        shader.setUniform("pointShadowMap", 4);
+        shader.setUniform("pointShadowLightIndex", 0);
+        shader.setUniform("pointShadowFarPlane", pointShadowMap.getFarPlane());
         lighting.upload(shader);
 
         while (!glfwWindowShouldClose(window.get())) {
@@ -107,6 +123,22 @@ int main() {
             shadowShader.setUniform("model", helmetModel);
             helmet.draw(shadowShader);
 
+            pointShadowShader.use();
+            pointShadowShader.setUniform("lightPosition", pointShadowMap.getLightPosition());
+            pointShadowShader.setUniform("farPlane", pointShadowMap.getFarPlane());
+            for (int face = 0; face < 6; ++face) {
+                pointShadowMap.bindFaceForWriting(face);
+                glClear(GL_DEPTH_BUFFER_BIT);
+                pointShadowShader.setUniform(
+                    "lightSpaceMatrix",
+                    pointShadowMap.getLightSpaceMatrix(face)
+                );
+                pointShadowShader.setUniform("model", sponzaModel);
+                sponza.draw(pointShadowShader);
+                pointShadowShader.setUniform("model", helmetModel);
+                helmet.draw(pointShadowShader);
+            }
+
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glViewport(0, 0, window.getWidth(), window.getHeight());
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -117,6 +149,7 @@ int main() {
             shader.setUniform("cameraPosition", camera.getPosition());
             skybox.bind(1);
             spotShadowMap.bind(3);
+            pointShadowMap.bind(4);
 
             shader.setUniform("model", sponzaModel);
             sponza.draw(shader);
