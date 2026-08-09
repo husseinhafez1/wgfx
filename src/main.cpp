@@ -35,7 +35,7 @@ int main() {
     try {
         Shader shader("pbr.vert.glsl", "pbr.frag.glsl");
         Shader shadowShader("shadow.vert.glsl", "shadow.frag.glsl");
-        ShadowMap shadowMap(2048, 2048);
+        ShadowMap shadowMap(2048, 2048, 4);
         Model sponza("sponza/sponza.glb");
         Model helmet("helmet/DamagedHelmet.glb");
         Skybox skybox({
@@ -58,21 +58,13 @@ int main() {
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 projection = camera.getProjectionMatrix();
         const glm::vec3 lightDirection = glm::normalize(glm::vec3(-1.0f, -0.55f, 0.25f));
-        const glm::vec3 lightTarget(0.0f, 1.5f, 0.0f);
-        const glm::mat4 lightView = glm::lookAt(
-            lightTarget - lightDirection * 30.0f,
-            lightTarget,
-            glm::vec3(0.0f, 1.0f, 0.0f)
-        );
-        const glm::mat4 lightProjection = glm::ortho(-21.0f, 21.0f, -15.0f, 15.0f, 0.1f, 70.0f);
-        const glm::mat4 lightSpaceMatrix = lightProjection * lightView;
 
         shader.use();
         shader.setUniform("view", view);
         shader.setUniform("projection", projection);
         shader.setUniform("environmentMap", 1);
         shader.setUniform("shadowMap", 3);
-        shader.setUniform("lightSpaceMatrix", lightSpaceMatrix);
+        shader.setUniform("cascadeCount", shadowMap.getCascadeCount());
         shader.setUniform("lightDirection", lightDirection);
         shader.setUniform("lightColor", glm::vec3(4.0f));
 
@@ -86,17 +78,32 @@ int main() {
             //     std::cout << "Recompiling shaders..." << std::endl;
             //     // shader.recompile();
             // }
+            if (window.getHeight() > 0) {
+                camera.setAspectRatio(
+                    static_cast<float>(window.getWidth()) / static_cast<float>(window.getHeight())
+                );
+            }
             view = camera.getViewMatrix();
             projection = camera.getProjectionMatrix();
 
-            shadowMap.bindForWriting();
-            glClear(GL_DEPTH_BUFFER_BIT);
+            shadowMap.updateCascades(
+                view,
+                projection,
+                camera.getNearPlane(),
+                camera.getFarPlane(),
+                lightDirection
+            );
             shadowShader.use();
-            shadowShader.setUniform("lightSpaceMatrix", lightSpaceMatrix);
-            shadowShader.setUniform("model", sponzaModel);
-            sponza.draw(shadowShader);
-            shadowShader.setUniform("model", helmetModel);
-            helmet.draw(shadowShader);
+            const auto& lightSpaceMatrices = shadowMap.getLightSpaceMatrices();
+            for (int cascade = 0; cascade < shadowMap.getCascadeCount(); ++cascade) {
+                shadowMap.bindLayerForWriting(cascade);
+                glClear(GL_DEPTH_BUFFER_BIT);
+                shadowShader.setUniform("lightSpaceMatrix", lightSpaceMatrices[cascade]);
+                shadowShader.setUniform("model", sponzaModel);
+                sponza.draw(shadowShader);
+                shadowShader.setUniform("model", helmetModel);
+                helmet.draw(shadowShader);
+            }
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glViewport(0, 0, window.getWidth(), window.getHeight());
@@ -106,6 +113,22 @@ int main() {
             shader.setUniform("view", view);
             shader.setUniform("projection", projection);
             shader.setUniform("cameraPosition", camera.getPosition());
+            const auto& cascadeDistances = shadowMap.getCascadeDistances();
+            const auto& cascadeDepthRanges = shadowMap.getCascadeDepthRanges();
+            for (int cascade = 0; cascade < shadowMap.getCascadeCount(); ++cascade) {
+                shader.setUniform(
+                    "lightSpaceMatrices[" + std::to_string(cascade) + "]",
+                    lightSpaceMatrices[cascade]
+                );
+                shader.setUniform(
+                    "cascadePlaneDistances[" + std::to_string(cascade) + "]",
+                    cascadeDistances[cascade]
+                );
+                shader.setUniform(
+                    "cascadeDepthRanges[" + std::to_string(cascade) + "]",
+                    cascadeDepthRanges[cascade]
+                );
+            }
             skybox.bind(1);
             shadowMap.bind(3);
 

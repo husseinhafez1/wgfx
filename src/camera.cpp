@@ -44,6 +44,14 @@ const glm::vec3& Camera::getPosition() const {
     return position;
 }
 
+float Camera::getNearPlane() const {
+    return nearPlane;
+}
+
+float Camera::getFarPlane() const {
+    return farPlane;
+}
+
 void Camera::processInput(float deltaTime, CameraMovement movement) {
     float speed = movementSpeed * deltaTime;
 

@@ -3,7 +3,6 @@
 in vec3 worldPosition;
 in vec3 worldNormal;
 in vec2 vertexUV;
-in vec4 lightSpacePosition;
 
 layout(location = 0) out vec4 fragmentColor;
 
@@ -19,7 +18,14 @@ uniform samplerCube environmentMap;
 uniform vec3 cameraPosition;
 uniform vec3 lightDirection;
 uniform vec3 lightColor;
-uniform sampler2D shadowMap;
+uniform sampler2DArrayShadow shadowMap;
+uniform mat4 view;
+
+const int MAX_CASCADES = 8;
+uniform int cascadeCount;
+uniform float cascadePlaneDistances[MAX_CASCADES];
+uniform float cascadeDepthRanges[MAX_CASCADES];
+uniform mat4 lightSpaceMatrices[MAX_CASCADES];
 
 const float PI = 3.14159265359;
 
@@ -52,23 +58,63 @@ vec3 fresnelSchlickRoughness(float cosine, vec3 reflectance, float surfaceRoughn
          * pow(clamp(1.0 - cosine, 0.0, 1.0), 5.0);
 }
 
-float calculateShadow(vec4 lightPosition, vec3 normal, vec3 light) {
+float sampleShadowLayer(int layer, vec3 normal, vec3 light) {
+    vec4 lightPosition = lightSpaceMatrices[layer] * vec4(worldPosition, 1.0);
     vec3 projected = lightPosition.xyz / lightPosition.w;
     projected = projected * 0.5 + 0.5;
-    if (projected.z > 1.0 || projected.z < 0.0) {
+    if (projected.z > 1.0 || projected.z < 0.0
+        || any(lessThan(projected.xy, vec2(0.0)))
+        || any(greaterThan(projected.xy, vec2(1.0)))) {
         return 0.0;
     }
 
-    float bias = max(0.0025 * (1.0 - dot(normal, light)), 0.00025);
-    vec2 texelSize = 1.0 / vec2(textureSize(shadowMap, 0));
-    float shadow = 0.0;
-    for (int x = -1; x <= 1; ++x) {
-        for (int y = -1; y <= 1; ++y) {
-            float closestDepth = texture(shadowMap, projected.xy + vec2(x, y) * texelSize).r;
-            shadow += projected.z - bias > closestDepth ? 1.0 : 0.0;
+    float worldSpaceBias = max(0.15 * (1.0 - dot(normal, light)), 0.02);
+    float bias = worldSpaceBias / cascadeDepthRanges[layer];
+    vec2 texelSize = 1.0 / vec2(textureSize(shadowMap, 0).xy);
+    float visibility = 0.0;
+    float totalWeight = 0.0;
+    for (int x = -2; x <= 2; ++x) {
+        for (int y = -2; y <= 2; ++y) {
+            float weight = float(3 - abs(x)) * float(3 - abs(y));
+            visibility += weight * texture(
+                shadowMap,
+                vec4(
+                    projected.xy + vec2(x, y) * texelSize,
+                    float(layer),
+                    projected.z - bias
+                )
+            );
+            totalWeight += weight;
         }
     }
-    return shadow / 9.0;
+    return 1.0 - visibility / totalWeight;
+}
+
+float calculateShadow(vec3 normal, vec3 light) {
+    float viewDepth = -(view * vec4(worldPosition, 1.0)).z;
+    int layer = cascadeCount - 1;
+    for (int cascade = 0; cascade < cascadeCount; ++cascade) {
+        if (viewDepth < cascadePlaneDistances[cascade]) {
+            layer = cascade;
+            break;
+        }
+    }
+
+    float shadow = sampleShadowLayer(layer, normal, light);
+    if (layer < cascadeCount - 1) {
+        float cascadeNear = layer == 0 ? 0.0 : cascadePlaneDistances[layer - 1];
+        float transitionWidth = (cascadePlaneDistances[layer] - cascadeNear) * 0.1;
+        float transition = smoothstep(
+            cascadePlaneDistances[layer] - transitionWidth,
+            cascadePlaneDistances[layer],
+            viewDepth
+        );
+        if (transition > 0.0) {
+            float nextShadow = sampleShadowLayer(layer + 1, normal, light);
+            shadow = mix(shadow, nextShadow, transition);
+        }
+    }
+    return shadow;
 }
 
 void main() {
@@ -100,7 +146,7 @@ void main() {
     vec3 specular = normalDistribution * geometry * fresnel
                   / max(4.0 * nDotV * nDotL, 0.0001);
     vec3 diffuseWeight = (vec3(1.0) - fresnel) * (1.0 - surfaceMetallic);
-    float shadow = calculateShadow(lightSpacePosition, normal, light);
+    float shadow = calculateShadow(normal, light);
     vec3 direct = (1.0 - shadow)
                 * (diffuseWeight * albedo / PI + specular) * lightColor * nDotL;
 

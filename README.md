@@ -9,7 +9,7 @@ A small C++17 graphics library built with OpenGL, GLFW, GLAD, GLM, and CMake.
 - OBJ, glTF, and GLB model loading
 - PBR materials and image-based lighting
 - Cubemap skyboxes
-- Directional shadow mapping
+- Cascaded directional shadow mapping with camera-fitted cascades
 - Camera and input controls
 
 ## Dependencies
