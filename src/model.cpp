@@ -543,3 +543,13 @@ void Model::draw(Shader& shader) const {
         );
     }
 }
+
+void Model::drawDepth() const {
+    glBindVertexArray(vao);
+    glDrawElements(
+        GL_TRIANGLES,
+        static_cast<GLsizei>(indexCount),
+        GL_UNSIGNED_INT,
+        nullptr
+    );
+}

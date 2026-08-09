@@ -19,12 +19,12 @@ SpotShadowMap::SpotShadowMap(int resolution) : resolution(resolution) {
     glTexImage2D(
         GL_TEXTURE_2D,
         0,
-        GL_DEPTH_COMPONENT32F,
+        GL_DEPTH_COMPONENT24,
         resolution,
         resolution,
         0,
         GL_DEPTH_COMPONENT,
-        GL_FLOAT,
+        GL_UNSIGNED_INT,
         nullptr
     );
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -72,6 +72,29 @@ void SpotShadowMap::update(const SpotLight& light) {
     );
     const glm::mat4 view = glm::lookAt(light.position, light.position + direction, up);
     lightSpaceMatrix = projection * view;
+}
+
+void SpotShadowMap::copyFrom(const SpotShadowMap& source) {
+    if (source.resolution != resolution) {
+        throw std::invalid_argument("Spot shadow maps must have matching resolutions.");
+    }
+    glCopyImageSubData(
+        source.depthTexture,
+        GL_TEXTURE_2D,
+        0,
+        0,
+        0,
+        0,
+        depthTexture,
+        GL_TEXTURE_2D,
+        0,
+        0,
+        0,
+        0,
+        resolution,
+        resolution,
+        1
+    );
 }
 
 void SpotShadowMap::bindForWriting() const {

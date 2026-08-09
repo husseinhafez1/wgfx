@@ -17,6 +17,7 @@ public:
     ~Model();
 
     void draw(Shader& shader) const;
+    void drawDepth() const;
 private:
     struct Material {
         glm::vec4 baseColor{1.0f};

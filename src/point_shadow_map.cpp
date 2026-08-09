@@ -19,12 +19,12 @@ PointShadowMap::PointShadowMap(int resolution) : resolution(resolution) {
         glTexImage2D(
             GL_TEXTURE_CUBE_MAP_POSITIVE_X + face,
             0,
-            GL_DEPTH_COMPONENT32F,
+            GL_DEPTH_COMPONENT24,
             resolution,
             resolution,
             0,
             GL_DEPTH_COMPONENT,
-            GL_FLOAT,
+            GL_UNSIGNED_INT,
             nullptr
         );
     }
@@ -85,6 +85,29 @@ void PointShadowMap::update(const PointLight& light) {
             upVectors[face]
         );
     }
+}
+
+void PointShadowMap::copyFrom(const PointShadowMap& source) {
+    if (source.resolution != resolution) {
+        throw std::invalid_argument("Point shadow maps must have matching resolutions.");
+    }
+    glCopyImageSubData(
+        source.depthCubemap,
+        GL_TEXTURE_CUBE_MAP,
+        0,
+        0,
+        0,
+        0,
+        depthCubemap,
+        GL_TEXTURE_CUBE_MAP,
+        0,
+        0,
+        0,
+        0,
+        resolution,
+        resolution,
+        6
+    );
 }
 
 void PointShadowMap::bindFaceForWriting(int face) const {

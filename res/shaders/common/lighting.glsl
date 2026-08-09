@@ -165,17 +165,11 @@ float calculateDirectionalShadow(vec3 normal, vec3 light) {
     return shadow;
 }
 
-const vec3 POINT_SHADOW_OFFSETS[20] = vec3[](
+const vec3 POINT_SHADOW_OFFSETS[8] = vec3[](
     vec3( 1.0,  1.0,  1.0), vec3( 1.0, -1.0,  1.0),
     vec3(-1.0, -1.0,  1.0), vec3(-1.0,  1.0,  1.0),
     vec3( 1.0,  1.0, -1.0), vec3( 1.0, -1.0, -1.0),
-    vec3(-1.0, -1.0, -1.0), vec3(-1.0,  1.0, -1.0),
-    vec3( 1.0,  1.0,  0.0), vec3( 1.0, -1.0,  0.0),
-    vec3(-1.0, -1.0,  0.0), vec3(-1.0,  1.0,  0.0),
-    vec3( 1.0,  0.0,  1.0), vec3(-1.0,  0.0,  1.0),
-    vec3( 1.0,  0.0, -1.0), vec3(-1.0,  0.0, -1.0),
-    vec3( 0.0,  1.0,  1.0), vec3( 0.0, -1.0,  1.0),
-    vec3( 0.0, -1.0, -1.0), vec3( 0.0,  1.0, -1.0)
+    vec3(-1.0, -1.0, -1.0), vec3(-1.0,  1.0, -1.0)
 );
 
 float calculatePointShadow(int lightIndex, vec3 normal, vec3 light) {
@@ -185,17 +179,17 @@ float calculatePointShadow(int lightIndex, vec3 normal, vec3 light) {
         return 0.0;
     }
 
-    float worldSpaceBias = max(0.08 * (1.0 - dot(normal, light)), 0.02);
+    float worldSpaceBias = max(0.12 * (1.0 - dot(normal, light)), 0.04);
     float comparisonDepth = (currentDepth - worldSpaceBias) / pointShadowFarPlane;
-    float diskRadius = 0.01 * currentDepth;
+    float diskRadius = 0.003 * currentDepth;
     float visibility = 0.0;
-    for (int sampleIndex = 0; sampleIndex < 20; ++sampleIndex) {
+    for (int sampleIndex = 0; sampleIndex < 8; ++sampleIndex) {
         visibility += texture(
             pointShadowMap,
             vec4(lightToFragment + POINT_SHADOW_OFFSETS[sampleIndex] * diskRadius, comparisonDepth)
         );
     }
-    return 1.0 - visibility / 20.0;
+    return 1.0 - visibility / 8.0;
 }
 
 float calculateSpotShadow(vec3 normal, vec3 light) {
@@ -212,13 +206,13 @@ float calculateSpotShadow(vec3 normal, vec3 light) {
         return 0.0;
     }
 
-    float bias = max(0.0025 * (1.0 - dot(normal, light)), 0.00025);
+    float bias = max(0.004 * (1.0 - dot(normal, light)), 0.0005);
     vec2 texelSize = 1.0 / vec2(textureSize(spotShadowMap, 0));
     float visibility = 0.0;
     float totalWeight = 0.0;
-    for (int x = -2; x <= 2; ++x) {
-        for (int y = -2; y <= 2; ++y) {
-            float weight = float(3 - abs(x)) * float(3 - abs(y));
+    for (int x = -1; x <= 1; ++x) {
+        for (int y = -1; y <= 1; ++y) {
+            float weight = float(2 - abs(x)) * float(2 - abs(y));
             visibility += weight * texture(
                 spotShadowMap,
                 vec3(projected.xy + vec2(x, y) * texelSize, projected.z - bias)

@@ -13,6 +13,7 @@ public:
     SpotShadowMap& operator=(const SpotShadowMap&) = delete;
 
     void update(const SpotLight& light);
+    void copyFrom(const SpotShadowMap& source);
     void bindForWriting() const;
     void bind(unsigned int slot) const;
     [[nodiscard]] const glm::mat4& getLightSpaceMatrix() const;

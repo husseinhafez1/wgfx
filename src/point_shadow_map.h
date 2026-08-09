@@ -15,6 +15,7 @@ public:
     PointShadowMap& operator=(const PointShadowMap&) = delete;
 
     void update(const PointLight& light);
+    void copyFrom(const PointShadowMap& source);
     void bindFaceForWriting(int face) const;
     void bind(unsigned int slot) const;
     [[nodiscard]] const glm::mat4& getLightSpaceMatrix(int face) const;

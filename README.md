@@ -16,6 +16,7 @@ A small C++17 graphics library built with OpenGL, GLFW, GLAD, GLM, and CMake.
 - Perspective shadow maps for spotlights
 - Cubemap shadow maps for point lights
 - Hardware-filtered PCF shadow sampling
+- Hybrid static and dynamic shadow-map rendering
 - Reusable GLSL lighting code through relative shader includes
 - Camera and input controls
 

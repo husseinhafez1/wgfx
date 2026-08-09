@@ -54,6 +54,8 @@ add_executable(wgfx
     src/spot_shadow_map.h
     src/point_shadow_map.cpp
     src/point_shadow_map.h
+    src/renderer.cpp
+    src/renderer.h
 )
 target_compile_features(wgfx PRIVATE cxx_std_17)
 target_include_directories(wgfx PRIVATE src)
