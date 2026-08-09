@@ -32,6 +32,7 @@ Window::Window(std::string title, int width, int height) : width(width), height(
 
     glfwGetFramebufferSize(window, &this->width, &this->height);
     glViewport(0, 0, this->width, this->height);
+    setVSync(true);
 }
 
 Window::~Window() {
@@ -47,6 +48,16 @@ GLFWwindow* Window::get() const {
 bool Window::isOpen() const {return window != nullptr && !glfwWindowShouldClose(window);}
 int Window::getWidth() const {return width;}
 int Window::getHeight() const {return height;}
+
+bool Window::isVSyncEnabled() const {
+    return vsyncEnabled;
+}
+
+void Window::setVSync(bool enabled) {
+    glfwMakeContextCurrent(window);
+    glfwSwapInterval(enabled ? 1 : 0);
+    vsyncEnabled = enabled;
+}
 
 void Window::framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     auto* owner = static_cast<Window*>(glfwGetWindowUserPointer(window));

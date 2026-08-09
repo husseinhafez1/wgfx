@@ -6,6 +6,7 @@
 
 #include "camera.h"
 #include "input.h"
+#include "imgui_layer.h"
 #include "lighting.h"
 #include "model.h"
 #include "point_shadow_map.h"
@@ -26,13 +27,14 @@ void Renderer::init() {
         throw std::logic_error("Renderer is already initialized.");
     }
 
-    window = std::make_unique<Window>("wgfx", 960, 720);
+    window = std::make_unique<Window>("wgfx", 1200, 900);
     if (!window->isOpen()) {
         throw std::runtime_error("Failed to initialize the renderer window.");
     }
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
+    gui = std::make_unique<ImGuiLayer>(window->get());
     camera = std::make_unique<Camera>();
     input = std::make_unique<Input>();
     lighting = std::make_unique<Lighting>();
@@ -107,6 +109,7 @@ void Renderer::run() {
     }
 
     while (window->isOpen()) {
+        gui->beginFrame();
         const float currentFrameTime = static_cast<float>(glfwGetTime());
         const float deltaTime = currentFrameTime - lastFrameTime;
         lastFrameTime = currentFrameTime;
@@ -118,6 +121,7 @@ void Renderer::run() {
             );
         }
         renderFrame(camera->getViewMatrix(), camera->getProjectionMatrix());
+        renderGui();
         window->pollEvents();
     }
 }
@@ -150,33 +154,33 @@ void Renderer::processInput(float deltaTime) {
     if (input->onKeyPress(GLFW_KEY_ESCAPE)) {
         glfwSetWindowShouldClose(nativeWindow, true);
     }
-    if (input->onKeyRelease(GLFW_KEY_R)) {
+    if (!gui->wantsKeyboardCapture() && input->onKeyRelease(GLFW_KEY_R)) {
         for (auto& [type, shader] : shaders) {
             shader->recompile();
         }
         configurePbrShader();
     }
 
-    if (input->onKeyHold(GLFW_KEY_W)) {
+    if (!gui->wantsKeyboardCapture() && input->onKeyHold(GLFW_KEY_W)) {
         camera->processInput(deltaTime, CameraMovement::FORWARD);
     }
-    if (input->onKeyHold(GLFW_KEY_S)) {
+    if (!gui->wantsKeyboardCapture() && input->onKeyHold(GLFW_KEY_S)) {
         camera->processInput(deltaTime, CameraMovement::BACKWARD);
     }
-    if (input->onKeyHold(GLFW_KEY_A)) {
+    if (!gui->wantsKeyboardCapture() && input->onKeyHold(GLFW_KEY_A)) {
         camera->processInput(deltaTime, CameraMovement::LEFT);
     }
-    if (input->onKeyHold(GLFW_KEY_D)) {
+    if (!gui->wantsKeyboardCapture() && input->onKeyHold(GLFW_KEY_D)) {
         camera->processInput(deltaTime, CameraMovement::RIGHT);
     }
-    if (input->onKeyHold(GLFW_KEY_Q)) {
+    if (!gui->wantsKeyboardCapture() && input->onKeyHold(GLFW_KEY_Q)) {
         camera->processInput(deltaTime, CameraMovement::UP);
     }
-    if (input->onKeyHold(GLFW_KEY_E)) {
+    if (!gui->wantsKeyboardCapture() && input->onKeyHold(GLFW_KEY_E)) {
         camera->processInput(deltaTime, CameraMovement::DOWN);
     }
 
-    if (input->onButtonHold(GLFW_MOUSE_BUTTON_LEFT)) {
+    if (!gui->wantsMouseCapture() && input->onButtonHold(GLFW_MOUSE_BUTTON_LEFT)) {
         double mouseX;
         double mouseY;
         glfwGetCursorPos(nativeWindow, &mouseX, &mouseY);
@@ -218,6 +222,14 @@ void Renderer::renderFrame(const glm::mat4& view, const glm::mat4& projection) {
     pointShadowMap->bind(4);
     drawScene(shader);
     skybox->draw(view, projection);
+}
+
+void Renderer::renderGui() {
+    bool vsyncEnabled = window->isVSyncEnabled();
+    if (gui->drawRendererPanel(vsyncEnabled)) {
+        window->setVSync(vsyncEnabled);
+    }
+    gui->endFrame();
 }
 
 void Renderer::renderStaticShadowMaps() {

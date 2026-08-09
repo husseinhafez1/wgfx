@@ -7,6 +7,7 @@
 
 class Camera;
 class Input;
+class ImGuiLayer;
 class Lighting;
 class Model;
 class PointShadowMap;
@@ -43,6 +44,7 @@ private:
     void configurePbrShader();
     void processInput(float deltaTime);
     void renderFrame(const glm::mat4& view, const glm::mat4& projection);
+    void renderGui();
     void renderStaticShadowMaps();
     void renderSpotShadowMap();
     void renderPointShadowMap();
@@ -51,6 +53,7 @@ private:
 
     // Declared first so the OpenGL context outlives every GPU resource.
     std::unique_ptr<Window> window;
+    std::unique_ptr<ImGuiLayer> gui;
     std::unique_ptr<Camera> camera;
     std::unique_ptr<Input> input;
     std::unique_ptr<Lighting> lighting;

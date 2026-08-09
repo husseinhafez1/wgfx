@@ -28,6 +28,21 @@ set_target_properties(glfw PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/deps/glfw/include"
 )
 
+add_library(imgui STATIC
+    deps/imgui/imgui.cpp
+    deps/imgui/imgui_draw.cpp
+    deps/imgui/imgui_tables.cpp
+    deps/imgui/imgui_widgets.cpp
+    deps/imgui/backends/imgui_impl_glfw.cpp
+    deps/imgui/backends/imgui_impl_opengl3.cpp
+)
+target_include_directories(imgui PUBLIC
+    deps/imgui
+    deps/imgui/backends
+)
+target_link_libraries(imgui PUBLIC glfw)
+target_compile_features(imgui PUBLIC cxx_std_17)
+
 add_executable(wgfx
     src/main.cpp
     src/shader.cpp
@@ -56,6 +71,8 @@ add_executable(wgfx
     src/point_shadow_map.h
     src/renderer.cpp
     src/renderer.h
+    src/imgui_layer.cpp
+    src/imgui_layer.h
 )
 target_compile_features(wgfx PRIVATE cxx_std_17)
 target_include_directories(wgfx PRIVATE src)
@@ -64,4 +81,4 @@ target_compile_definitions(wgfx PRIVATE
     MODEL_DIR="${CMAKE_CURRENT_SOURCE_DIR}/res/models/"
     CUBEMAP_DIR="${CMAKE_CURRENT_SOURCE_DIR}/res/cubemaps/"
 )
-target_link_libraries(wgfx PRIVATE glad glfw glm::glm tinyobjloader stb_image fastgltf::fastgltf opengl32 gdi32 user32 shell32 winmm)
+target_link_libraries(wgfx PRIVATE glad glfw imgui glm::glm tinyobjloader stb_image fastgltf::fastgltf opengl32 gdi32 user32 shell32 winmm)

@@ -18,6 +18,7 @@ A small C++17 graphics library built with OpenGL, GLFW, GLAD, GLM, and CMake.
 - Hardware-filtered PCF shadow sampling
 - Hybrid static and dynamic shadow-map rendering
 - Reusable GLSL lighting code through relative shader includes
+- Dockable Dear ImGui renderer settings and runtime VSync control
 - Camera and input controls
 
 ## Dependencies
@@ -28,6 +29,7 @@ A small C++17 graphics library built with OpenGL, GLFW, GLAD, GLM, and CMake.
 - [fastgltf](https://github.com/spnda/fastgltf)
 - [tinyobjloader](https://github.com/tinyobjloader/tinyobjloader)
 - [stb](https://github.com/nothings/stb)
+- [Dear ImGui](https://github.com/ocornut/imgui)
 
 ## Assets
 
@@ -52,7 +54,6 @@ cmake --build build-clang
 
 ## Next
 
-- [ ] Add an ImGui interface
 - [ ] Implement SSAO
 - [ ] Improve PBR and environment lighting
 - [ ] Add a Vulkan backend later
