@@ -1,4 +1,4 @@
-#include "shadow_map.h"
+#include "directional_shadow_map.h"
 
 #include <glad/glad.h>
 #include <glm/gtc/matrix_transform.hpp>
@@ -16,7 +16,7 @@ glm::vec3 transformPoint(const glm::mat4& matrix, const glm::vec3& point) {
 }
 }
 
-ShadowMap::ShadowMap(int width, int height, int cascadeCount)
+DirectionalShadowMap::DirectionalShadowMap(int width, int height, int cascadeCount)
     : width(width),
       height(height),
       cascadeCount(cascadeCount),
@@ -68,12 +68,12 @@ ShadowMap::ShadowMap(int width, int height, int cascadeCount)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-ShadowMap::~ShadowMap() {
+DirectionalShadowMap::~DirectionalShadowMap() {
     glDeleteTextures(1, &depthTexture);
     glDeleteFramebuffers(1, &framebuffer);
 }
 
-void ShadowMap::updateCascades(
+void DirectionalShadowMap::updateCascades(
     const glm::mat4& view,
     const glm::mat4& projection,
     float cameraNearPlane,
@@ -200,7 +200,7 @@ void ShadowMap::updateCascades(
     }
 }
 
-void ShadowMap::bindLayerForWriting(int layer) const {
+void DirectionalShadowMap::bindLayerForWriting(int layer) const {
     if (layer < 0 || layer >= cascadeCount) {
         throw std::out_of_range("Shadow-map cascade layer is out of range.");
     }
@@ -209,31 +209,31 @@ void ShadowMap::bindLayerForWriting(int layer) const {
     glFramebufferTextureLayer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthTexture, 0, layer);
 }
 
-void ShadowMap::bind(unsigned int slot) const {
+void DirectionalShadowMap::bind(unsigned int slot) const {
     glActiveTexture(GL_TEXTURE0 + slot);
     glBindTexture(GL_TEXTURE_2D_ARRAY, depthTexture);
 }
 
-int ShadowMap::getWidth() const {
+int DirectionalShadowMap::getWidth() const {
     return width;
 }
 
-int ShadowMap::getHeight() const {
+int DirectionalShadowMap::getHeight() const {
     return height;
 }
 
-int ShadowMap::getCascadeCount() const {
+int DirectionalShadowMap::getCascadeCount() const {
     return cascadeCount;
 }
 
-const std::vector<float>& ShadowMap::getCascadeDistances() const {
+const std::vector<float>& DirectionalShadowMap::getCascadeDistances() const {
     return cascadeDistances;
 }
 
-const std::vector<float>& ShadowMap::getCascadeDepthRanges() const {
+const std::vector<float>& DirectionalShadowMap::getCascadeDepthRanges() const {
     return cascadeDepthRanges;
 }
 
-const std::vector<glm::mat4>& ShadowMap::getLightSpaceMatrices() const {
+const std::vector<glm::mat4>& DirectionalShadowMap::getLightSpaceMatrices() const {
     return lightSpaceMatrices;
 }

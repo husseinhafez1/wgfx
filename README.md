@@ -3,6 +3,7 @@
 A small C++17 graphics library built with OpenGL, GLFW, GLAD, GLM, and CMake.
 
 ![Sponza and helmet render](images/sponza_helmet.png)
+![Sponza and helmet spotlight render](images/sponza_helmet_spot.png)
 
 ## Current Features
 
@@ -10,6 +11,7 @@ A small C++17 graphics library built with OpenGL, GLFW, GLAD, GLM, and CMake.
 - PBR materials and image-based lighting
 - Cubemap skyboxes
 - Cascaded directional shadow mapping with camera-fitted cascades
+- Directional, point, and spot light types
 - Camera and input controls
 
 ## Dependencies

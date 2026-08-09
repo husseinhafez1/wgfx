@@ -46,8 +46,12 @@ add_executable(wgfx
     src/skybox.h
     src/window.cpp
     src/window.h
-    src/shadow_map.cpp
-    src/shadow_map.h
+    src/directional_shadow_map.cpp
+    src/directional_shadow_map.h
+    src/lighting.cpp
+    src/lighting.h
+    src/spot_shadow_map.cpp
+    src/spot_shadow_map.h
 )
 target_compile_features(wgfx PRIVATE cxx_std_17)
 target_include_directories(wgfx PRIVATE src)

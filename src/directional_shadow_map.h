@@ -4,15 +4,15 @@
 
 #include <vector>
 
-class ShadowMap {
+class DirectionalShadowMap {
 public:
     static constexpr int MaxCascades = 8;
 
-    ShadowMap(int width, int height, int cascadeCount = 4);
-    ~ShadowMap();
+    DirectionalShadowMap(int width, int height, int cascadeCount = 4);
+    ~DirectionalShadowMap();
 
-    ShadowMap(const ShadowMap&) = delete;
-    ShadowMap& operator=(const ShadowMap&) = delete;
+    DirectionalShadowMap(const DirectionalShadowMap&) = delete;
+    DirectionalShadowMap& operator=(const DirectionalShadowMap&) = delete;
 
     void updateCascades(
         const glm::mat4& view,

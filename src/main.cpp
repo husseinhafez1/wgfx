@@ -19,7 +19,8 @@
 #include "model.h"
 #include "skybox.h"
 #include "window.h"
-#include "shadow_map.h"
+#include "lighting.h"
+#include "spot_shadow_map.h"
 
 Camera camera;
 Input input;
@@ -35,7 +36,7 @@ int main() {
     try {
         Shader shader("pbr.vert.glsl", "pbr.frag.glsl");
         Shader shadowShader("shadow.vert.glsl", "shadow.frag.glsl");
-        ShadowMap shadowMap(2048, 2048, 4);
+        SpotShadowMap spotShadowMap(2048);
         Model sponza("sponza/sponza.glb");
         Model helmet("helmet/DamagedHelmet.glb");
         Skybox skybox({
@@ -57,16 +58,27 @@ int main() {
         );
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 projection = camera.getProjectionMatrix();
-        const glm::vec3 lightDirection = glm::normalize(glm::vec3(-1.0f, -0.55f, 0.25f));
+        Lighting lighting;
+        const SpotLight helmetSpotlight{
+            glm::vec3(0.0f, 8.0f, 0.0f),
+            glm::vec3(0.0f, -1.0f, 0.0f),
+            glm::vec3(1.0f),
+            150.0f,
+            15.0f,
+            25.0f,
+            35.0f
+        };
+        lighting.addSpotLight(helmetSpotlight);
+        spotShadowMap.update(helmetSpotlight);
 
         shader.use();
         shader.setUniform("view", view);
         shader.setUniform("projection", projection);
         shader.setUniform("environmentMap", 1);
-        shader.setUniform("shadowMap", 3);
-        shader.setUniform("cascadeCount", shadowMap.getCascadeCount());
-        shader.setUniform("lightDirection", lightDirection);
-        shader.setUniform("lightColor", glm::vec3(4.0f));
+        shader.setUniform("spotShadowMap", 3);
+        shader.setUniform("spotShadowLightIndex", 0);
+        shader.setUniform("spotLightSpaceMatrix", spotShadowMap.getLightSpaceMatrix());
+        lighting.upload(shader);
 
         while (!glfwWindowShouldClose(window.get())) {
             float currentFrameTime = static_cast<float>(glfwGetTime());
@@ -86,24 +98,14 @@ int main() {
             view = camera.getViewMatrix();
             projection = camera.getProjectionMatrix();
 
-            shadowMap.updateCascades(
-                view,
-                projection,
-                camera.getNearPlane(),
-                camera.getFarPlane(),
-                lightDirection
-            );
+            spotShadowMap.bindForWriting();
+            glClear(GL_DEPTH_BUFFER_BIT);
             shadowShader.use();
-            const auto& lightSpaceMatrices = shadowMap.getLightSpaceMatrices();
-            for (int cascade = 0; cascade < shadowMap.getCascadeCount(); ++cascade) {
-                shadowMap.bindLayerForWriting(cascade);
-                glClear(GL_DEPTH_BUFFER_BIT);
-                shadowShader.setUniform("lightSpaceMatrix", lightSpaceMatrices[cascade]);
-                shadowShader.setUniform("model", sponzaModel);
-                sponza.draw(shadowShader);
-                shadowShader.setUniform("model", helmetModel);
-                helmet.draw(shadowShader);
-            }
+            shadowShader.setUniform("lightSpaceMatrix", spotShadowMap.getLightSpaceMatrix());
+            shadowShader.setUniform("model", sponzaModel);
+            sponza.draw(shadowShader);
+            shadowShader.setUniform("model", helmetModel);
+            helmet.draw(shadowShader);
 
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             glViewport(0, 0, window.getWidth(), window.getHeight());
@@ -113,24 +115,8 @@ int main() {
             shader.setUniform("view", view);
             shader.setUniform("projection", projection);
             shader.setUniform("cameraPosition", camera.getPosition());
-            const auto& cascadeDistances = shadowMap.getCascadeDistances();
-            const auto& cascadeDepthRanges = shadowMap.getCascadeDepthRanges();
-            for (int cascade = 0; cascade < shadowMap.getCascadeCount(); ++cascade) {
-                shader.setUniform(
-                    "lightSpaceMatrices[" + std::to_string(cascade) + "]",
-                    lightSpaceMatrices[cascade]
-                );
-                shader.setUniform(
-                    "cascadePlaneDistances[" + std::to_string(cascade) + "]",
-                    cascadeDistances[cascade]
-                );
-                shader.setUniform(
-                    "cascadeDepthRanges[" + std::to_string(cascade) + "]",
-                    cascadeDepthRanges[cascade]
-                );
-            }
             skybox.bind(1);
-            shadowMap.bind(3);
+            spotShadowMap.bind(3);
 
             shader.setUniform("model", sponzaModel);
             sponza.draw(shader);
