@@ -31,8 +31,6 @@ A small C++17 graphics library built with OpenGL, GLFW, GLAD, GLM, and CMake.
 - [stb](https://github.com/nothings/stb)
 - [Dear ImGui](https://github.com/ocornut/imgui)
 - [LunarG Vulkan SDK](https://vulkan.lunarg.com/)
-- [glslang](https://github.com/KhronosGroup/glslang)
-- [Taskflow](https://github.com/taskflow/taskflow)
 
 ## Assets
 
@@ -47,6 +45,14 @@ cmake -S . -B build-clang -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER
 cmake --build build-clang
 .\build-clang\wgfx.exe
 ```
+
+## Backend Selection
+
+- `wgfx.exe -V` or `wgfx.exe -Vulkan`: Force the Vulkan bootstrap
+- `wgfx.exe -O` or `wgfx.exe -OpenGL`: Force the OpenGL renderer
+- `wgfx.exe`: Prefer Vulkan when a loader and compatible driver are available, otherwise fall back to OpenGL
+
+The Vulkan path currently creates a no-API window and Vulkan instance. Rendering is still implemented by the OpenGL backend.
 
 ## Project Layout
 
@@ -68,6 +74,5 @@ All library-owned C++ APIs are declared in the `wgfx` namespace.
 
 - [ ] Implement SSAO
 - [ ] Improve PBR and environment lighting
-- [ ] Add a Vulkan backend later
 - [ ] HDR
 - [ ] MSAA

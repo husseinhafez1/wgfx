@@ -31,7 +31,7 @@ void Renderer::init() {
         throw std::logic_error("Renderer is already initialized.");
     }
 
-    window = std::make_unique<Window>("wgfx", 1200, 900);
+    window = std::make_unique<Window>("wgfx", 1200, 900, GraphicsBackend::OpenGL);
     if (!window->isOpen()) {
         throw std::runtime_error("Failed to initialize the renderer window.");
     }

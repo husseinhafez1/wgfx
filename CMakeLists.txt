@@ -1,24 +1,10 @@
-cmake_minimum_required(VERSION 3.22.1)
+cmake_minimum_required(VERSION 3.20)
 
 project(wgfx LANGUAGES C CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL "Generate compile commands for editor tooling" FORCE)
 
 find_package(Vulkan REQUIRED)
-
-set(GLSLANG_TESTS OFF CACHE BOOL "" FORCE)
-set(GLSLANG_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
-set(ENABLE_GLSLANG_BINARIES OFF CACHE BOOL "" FORCE)
-set(ENABLE_HLSL OFF CACHE BOOL "" FORCE)
-set(ENABLE_OPT OFF CACHE BOOL "" FORCE)
-set(BUILD_EXTERNAL OFF CACHE BOOL "" FORCE)
-add_subdirectory(deps/glslang EXCLUDE_FROM_ALL)
-unset(BUILD_EXTERNAL CACHE)
-
-add_library(taskflow INTERFACE)
-add_library(Taskflow::Taskflow ALIAS taskflow)
-target_include_directories(taskflow SYSTEM INTERFACE deps/taskflow)
-target_compile_features(taskflow INTERFACE cxx_std_20)
 
 add_library(glad STATIC deps/glad/src/glad.c)
 target_include_directories(glad PUBLIC deps/glad/include)
@@ -106,10 +92,6 @@ target_link_libraries(wgfx PRIVATE
     stb_image
     fastgltf::fastgltf
     Vulkan::Vulkan
-    glslang::glslang
-    glslang::SPIRV
-    glslang::glslang-default-resource-limits
-    Taskflow::Taskflow
     opengl32
     gdi32
     user32
