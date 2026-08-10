@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glad/glad.h>
+#include <vulkan/vulkan.h>
 #include <GLFW/glfw3.h>
 
 #include <string>
@@ -34,6 +35,10 @@ public:
     [[nodiscard]] int getHeight() const;
     [[nodiscard]] GraphicsBackend getBackend() const;
     [[nodiscard]] std::vector<const char*> getRequiredVulkanInstanceExtensions() const;
+    [[nodiscard]] VkResult createVulkanSurface(
+        VkInstance instance,
+        VkSurfaceKHR* surface
+    ) const;
     [[nodiscard]] bool isVSyncEnabled() const;
     void setVSync(bool enabled);
     void getCursorPos(int& x, int& y);

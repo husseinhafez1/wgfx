@@ -86,6 +86,13 @@ std::vector<const char*> Window::getRequiredVulkanInstanceExtensions() const {
     return std::vector<const char*>(extensions, extensions + extensionCount);
 }
 
+VkResult Window::createVulkanSurface(VkInstance instance, VkSurfaceKHR* surface) const {
+    if (backend != GraphicsBackend::Vulkan || instance == VK_NULL_HANDLE || surface == nullptr) {
+        return VK_ERROR_INITIALIZATION_FAILED;
+    }
+    return glfwCreateWindowSurface(instance, window, nullptr, surface);
+}
+
 bool Window::isVSyncEnabled() const {
     return vsyncEnabled;
 }
