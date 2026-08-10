@@ -24,6 +24,9 @@ public:
     );
     ~Window();
 
+    Window(const Window&) = delete;
+    Window& operator=(const Window&) = delete;
+
     [[nodiscard]] static bool isVulkanSupported();
     [[nodiscard]] GLFWwindow* get() const;
     [[nodiscard]] bool isOpen() const;

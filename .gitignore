@@ -68,6 +68,7 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+*.spv
 
 # Keep vendored dependencies, including prebuilt libraries.
 !deps/

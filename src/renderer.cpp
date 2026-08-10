@@ -44,15 +44,15 @@ void Renderer::init() {
     lighting = std::make_unique<Lighting>();
     shaders.emplace(
         ShaderType::Pbr,
-        std::make_unique<Shader>("pbr.vert.glsl", "pbr.frag.glsl")
+        std::make_unique<Shader>("GL/pbr.vert.glsl", "GL/pbr.frag.glsl")
     );
     shaders.emplace(
         ShaderType::Shadow,
-        std::make_unique<Shader>("shadow.vert.glsl", "shadow.frag.glsl")
+        std::make_unique<Shader>("GL/shadow.vert.glsl", "GL/shadow.frag.glsl")
     );
     shaders.emplace(
         ShaderType::PointShadow,
-        std::make_unique<Shader>("point_shadow.vert.glsl", "point_shadow.frag.glsl")
+        std::make_unique<Shader>("GL/point_shadow.vert.glsl", "GL/point_shadow.frag.glsl")
     );
 
     staticSpotShadowMap = std::make_unique<SpotShadowMap>(1024);

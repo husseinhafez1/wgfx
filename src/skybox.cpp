@@ -36,13 +36,13 @@ std::filesystem::path resolveFacePath(const std::string& face) {
 }
 
 Skybox::Skybox(const std::string& cubemapAtlas)
-    : shader("skybox.vert.glsl", "skybox.frag.glsl") {
+    : shader("GL/skybox.vert.glsl", "GL/skybox.frag.glsl") {
     loadAtlas(cubemapAtlas);
     createGeometry();
 }
 
 Skybox::Skybox(const std::array<std::string, 6>& faces)
-    : shader("skybox.vert.glsl", "skybox.frag.glsl") {
+    : shader("GL/skybox.vert.glsl", "GL/skybox.frag.glsl") {
     loadFaces(faces);
     createGeometry();
 }

@@ -6,6 +6,64 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL "Generate compile commands for e
 
 find_package(Vulkan REQUIRED)
 
+if(NOT Vulkan_GLSLC_EXECUTABLE)
+    message(FATAL_ERROR "The Vulkan SDK was found, but glslc is unavailable.")
+endif()
+
+set(VULKAN_SHADER_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/res/shaders/vulkan")
+file(GLOB_RECURSE VULKAN_SHADER_SOURCES CONFIGURE_DEPENDS
+    "${VULKAN_SHADER_DIRECTORY}/*.vert"
+    "${VULKAN_SHADER_DIRECTORY}/*.vert.glsl"
+    "${VULKAN_SHADER_DIRECTORY}/*.frag"
+    "${VULKAN_SHADER_DIRECTORY}/*.frag.glsl"
+    "${VULKAN_SHADER_DIRECTORY}/*.comp"
+    "${VULKAN_SHADER_DIRECTORY}/*.comp.glsl"
+    "${VULKAN_SHADER_DIRECTORY}/*.geom"
+    "${VULKAN_SHADER_DIRECTORY}/*.geom.glsl"
+    "${VULKAN_SHADER_DIRECTORY}/*.tesc"
+    "${VULKAN_SHADER_DIRECTORY}/*.tesc.glsl"
+    "${VULKAN_SHADER_DIRECTORY}/*.tese"
+    "${VULKAN_SHADER_DIRECTORY}/*.tese.glsl"
+)
+
+set(VULKAN_SHADER_BINARIES)
+foreach(SHADER_SOURCE IN LISTS VULKAN_SHADER_SOURCES)
+    get_filename_component(SHADER_FILENAME "${SHADER_SOURCE}" NAME)
+    string(REGEX REPLACE "\\.glsl$" "" SHADER_OUTPUT_NAME "${SHADER_FILENAME}")
+    set(SHADER_BINARY "${VULKAN_SHADER_DIRECTORY}/${SHADER_OUTPUT_NAME}.spv")
+
+    if(SHADER_FILENAME MATCHES "\\.vert(\\.glsl)?$")
+        set(SHADER_STAGE vertex)
+    elseif(SHADER_FILENAME MATCHES "\\.frag(\\.glsl)?$")
+        set(SHADER_STAGE fragment)
+    elseif(SHADER_FILENAME MATCHES "\\.comp(\\.glsl)?$")
+        set(SHADER_STAGE compute)
+    elseif(SHADER_FILENAME MATCHES "\\.geom(\\.glsl)?$")
+        set(SHADER_STAGE geometry)
+    elseif(SHADER_FILENAME MATCHES "\\.tesc(\\.glsl)?$")
+        set(SHADER_STAGE tesscontrol)
+    elseif(SHADER_FILENAME MATCHES "\\.tese(\\.glsl)?$")
+        set(SHADER_STAGE tesseval)
+    else()
+        message(FATAL_ERROR "Cannot determine Vulkan shader stage for ${SHADER_FILENAME}")
+    endif()
+
+    add_custom_command(
+        OUTPUT "${SHADER_BINARY}"
+        COMMAND "${Vulkan_GLSLC_EXECUTABLE}"
+                --target-env=vulkan1.3
+                -fshader-stage=${SHADER_STAGE}
+                "${SHADER_SOURCE}"
+                -o "${SHADER_BINARY}"
+        DEPENDS "${SHADER_SOURCE}"
+        COMMENT "Compiling ${SHADER_FILENAME} to SPIR-V"
+        VERBATIM
+    )
+    list(APPEND VULKAN_SHADER_BINARIES "${SHADER_BINARY}")
+endforeach()
+
+add_custom_target(vulkan_shaders ALL DEPENDS ${VULKAN_SHADER_BINARIES})
+
 add_library(glad STATIC deps/glad/src/glad.c)
 target_include_directories(glad PUBLIC deps/glad/include)
 
@@ -76,10 +134,12 @@ add_executable(wgfx
     src/imgui_layer.cpp
     include/imgui_layer.h
 )
+add_dependencies(wgfx vulkan_shaders)
 target_compile_features(wgfx PRIVATE cxx_std_20)
 target_include_directories(wgfx PRIVATE include)
 target_compile_definitions(wgfx PRIVATE
     SHADER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/res/shaders/"
+    VULKAN_SHADER_DIR="${VULKAN_SHADER_DIRECTORY}/"
     MODEL_DIR="${CMAKE_CURRENT_SOURCE_DIR}/res/models/"
     CUBEMAP_DIR="${CMAKE_CURRENT_SOURCE_DIR}/res/cubemaps/"
 )

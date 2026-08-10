@@ -58,7 +58,8 @@ The Vulkan path currently creates a no-API window and Vulkan instance. Rendering
 
 - `include/`: Public C++ headers
 - `src/`: C++ implementation files
-- `res/shaders/`: GLSL shaders and shared shader includes
+- `res/shaders/GL/`: OpenGL shaders and shared shader includes
+- `res/shaders/vulkan/`: Vulkan sources and generated `*.spirv` binaries
 - `main.cpp`: Application entry point
 
 All library-owned C++ APIs are declared in the `wgfx` namespace.

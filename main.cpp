@@ -11,6 +11,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <fstream>
 
 namespace {
 enum class BackendSelection {
@@ -18,6 +19,31 @@ enum class BackendSelection {
     OpenGL,
     Vulkan
 };
+
+static std::vector<char> readFile(const std::string& filePath) {
+    std::ifstream file(filePath, std::ios::ate | std::ios::binary);
+
+    if (!file.is_open()) {
+        throw std::runtime_error("failed to open file " + filePath);
+    }
+
+    size_t fileSize = static_cast<size_t>(file.tellg());
+    std::vector<char> buffer(fileSize);
+
+    file.seekg(0);
+    file.read(buffer.data(), fileSize);
+
+    file.close();
+    return buffer;
+}
+
+void createGraphicsPipeline(const std::string& vertFilePath, const std::string& fragFilePath) {
+    auto vertCode = readFile(vertFilePath);
+    auto fragCode = readFile(fragFilePath);
+
+    std::cout << "Vertex Shader Code size: " << vertCode.size() << std::endl;
+    std::cout << "Fragment Shader Code size: " << fragCode.size() << std::endl;
+}
 
 BackendSelection parseBackend(int argc, char** argv) {
     if (argc == 1) {
@@ -52,35 +78,10 @@ int runVulkan() {
     if (!window.isOpen()) {
         throw std::runtime_error("Failed to create a Vulkan-compatible window.");
     }
-
-    const std::vector<const char*> extensions = window.getRequiredVulkanInstanceExtensions();
-    if (extensions.empty()) {
-        throw std::runtime_error("GLFW did not provide the required Vulkan instance extensions.");
-    }
-
-    vk::raii::Context context;
-    const uint32_t supportedVersion = context.enumerateInstanceVersion();
-    const uint32_t requestedVersion = std::min(supportedVersion, vk::ApiVersion14);
-    const vk::ApplicationInfo applicationInfo(
-        "wgfx",
-        VK_MAKE_VERSION(1, 0, 0),
-        "wgfx",
-        VK_MAKE_VERSION(1, 0, 0),
-        requestedVersion
+    createGraphicsPipeline(
+        std::string(VULKAN_SHADER_DIR) + "basic.vert.spv",
+        std::string(VULKAN_SHADER_DIR) + "basic.frag.spv"
     );
-    const vk::InstanceCreateInfo createInfo(
-        {},
-        &applicationInfo,
-        0,
-        nullptr,
-        static_cast<uint32_t>(extensions.size()),
-        extensions.data()
-    );
-    const vk::raii::Instance instance(context, createInfo);
-
-    std::cout << "Using Vulkan "
-              << VK_API_VERSION_MAJOR(requestedVersion) << '.'
-              << VK_API_VERSION_MINOR(requestedVersion) << '\n';
     while (window.isOpen()) {
         window.pollEvents();
     }
