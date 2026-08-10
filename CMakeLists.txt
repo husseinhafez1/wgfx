@@ -1,10 +1,24 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.22.1)
 
 project(wgfx LANGUAGES C CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL "Generate compile commands for editor tooling" FORCE)
 
 find_package(Vulkan REQUIRED)
+
+set(GLSLANG_TESTS OFF CACHE BOOL "" FORCE)
+set(GLSLANG_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
+set(ENABLE_GLSLANG_BINARIES OFF CACHE BOOL "" FORCE)
+set(ENABLE_HLSL OFF CACHE BOOL "" FORCE)
+set(ENABLE_OPT OFF CACHE BOOL "" FORCE)
+set(BUILD_EXTERNAL OFF CACHE BOOL "" FORCE)
+add_subdirectory(deps/glslang EXCLUDE_FROM_ALL)
+unset(BUILD_EXTERNAL CACHE)
+
+add_library(taskflow INTERFACE)
+add_library(Taskflow::Taskflow ALIAS taskflow)
+target_include_directories(taskflow SYSTEM INTERFACE deps/taskflow)
+target_compile_features(taskflow INTERFACE cxx_std_20)
 
 add_library(glad STATIC deps/glad/src/glad.c)
 target_include_directories(glad PUBLIC deps/glad/include)
@@ -76,11 +90,29 @@ add_executable(wgfx
     src/imgui_layer.cpp
     include/imgui_layer.h
 )
-target_compile_features(wgfx PRIVATE cxx_std_17)
+target_compile_features(wgfx PRIVATE cxx_std_20)
 target_include_directories(wgfx PRIVATE include)
 target_compile_definitions(wgfx PRIVATE
     SHADER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/res/shaders/"
     MODEL_DIR="${CMAKE_CURRENT_SOURCE_DIR}/res/models/"
     CUBEMAP_DIR="${CMAKE_CURRENT_SOURCE_DIR}/res/cubemaps/"
 )
-target_link_libraries(wgfx PRIVATE glad glfw imgui glm::glm tinyobjloader stb_image fastgltf::fastgltf Vulkan::Vulkan opengl32 gdi32 user32 shell32 winmm)
+target_link_libraries(wgfx PRIVATE
+    glad
+    glfw
+    imgui
+    glm::glm
+    tinyobjloader
+    stb_image
+    fastgltf::fastgltf
+    Vulkan::Vulkan
+    glslang::glslang
+    glslang::SPIRV
+    glslang::glslang-default-resource-limits
+    Taskflow::Taskflow
+    opengl32
+    gdi32
+    user32
+    shell32
+    winmm
+)

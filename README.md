@@ -31,6 +31,8 @@ A small C++17 graphics library built with OpenGL, GLFW, GLAD, GLM, and CMake.
 - [stb](https://github.com/nothings/stb)
 - [Dear ImGui](https://github.com/ocornut/imgui)
 - [LunarG Vulkan SDK](https://vulkan.lunarg.com/)
+- [glslang](https://github.com/KhronosGroup/glslang)
+- [Taskflow](https://github.com/taskflow/taskflow)
 
 ## Assets
 
