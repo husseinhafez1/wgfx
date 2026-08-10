@@ -4,6 +4,8 @@ project(wgfx LANGUAGES C CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL "Generate compile commands for editor tooling" FORCE)
 
+find_package(Vulkan REQUIRED)
+
 add_library(glad STATIC deps/glad/src/glad.c)
 target_include_directories(glad PUBLIC deps/glad/include)
 
@@ -81,4 +83,4 @@ target_compile_definitions(wgfx PRIVATE
     MODEL_DIR="${CMAKE_CURRENT_SOURCE_DIR}/res/models/"
     CUBEMAP_DIR="${CMAKE_CURRENT_SOURCE_DIR}/res/cubemaps/"
 )
-target_link_libraries(wgfx PRIVATE glad glfw imgui glm::glm tinyobjloader stb_image fastgltf::fastgltf opengl32 gdi32 user32 shell32 winmm)
+target_link_libraries(wgfx PRIVATE glad glfw imgui glm::glm tinyobjloader stb_image fastgltf::fastgltf Vulkan::Vulkan opengl32 gdi32 user32 shell32 winmm)

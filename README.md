@@ -30,6 +30,7 @@ A small C++17 graphics library built with OpenGL, GLFW, GLAD, GLM, and CMake.
 - [tinyobjloader](https://github.com/tinyobjloader/tinyobjloader)
 - [stb](https://github.com/nothings/stb)
 - [Dear ImGui](https://github.com/ocornut/imgui)
+- [LunarG Vulkan SDK](https://vulkan.lunarg.com/)
 
 ## Assets
 
