@@ -91,7 +91,7 @@ VkResult SwapChain::submitCommandBuffers(
 
     const VkSemaphore waitSemaphores[] = {imageAvailableSemaphores[currentFrame]};
     const VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-    const VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[currentFrame]};
+    const VkSemaphore signalSemaphores[] = {renderFinishedSemaphores[*imageIndex]};
     const VkSubmitInfo submitInfo{
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
         .pNext = nullptr,
@@ -374,7 +374,7 @@ void SwapChain::createFramebuffers() {
 
 void SwapChain::createSyncObjects() {
     imageAvailableSemaphores.resize(MaxFramesInFlight, VK_NULL_HANDLE);
-    renderFinishedSemaphores.resize(MaxFramesInFlight, VK_NULL_HANDLE);
+    renderFinishedSemaphores.resize(imageCount(), VK_NULL_HANDLE);
     inFlightFences.resize(MaxFramesInFlight, VK_NULL_HANDLE);
     imagesInFlight.resize(imageCount(), VK_NULL_HANDLE);
 
@@ -395,12 +395,6 @@ void SwapChain::createSyncObjects() {
                 nullptr,
                 &imageAvailableSemaphores[index]
             ) != VK_SUCCESS ||
-            vkCreateSemaphore(
-                device.getDevice(),
-                &semaphoreInfo,
-                nullptr,
-                &renderFinishedSemaphores[index]
-            ) != VK_SUCCESS ||
             vkCreateFence(
                 device.getDevice(),
                 &fenceInfo,
@@ -408,6 +402,16 @@ void SwapChain::createSyncObjects() {
                 &inFlightFences[index]
             ) != VK_SUCCESS) {
             throw std::runtime_error("Failed to create frame synchronization objects.");
+        }
+    }
+    for (VkSemaphore& semaphore : renderFinishedSemaphores) {
+        if (vkCreateSemaphore(
+                device.getDevice(),
+                &semaphoreInfo,
+                nullptr,
+                &semaphore
+            ) != VK_SUCCESS) {
+            throw std::runtime_error("Failed to create presentation semaphore.");
         }
     }
 }
