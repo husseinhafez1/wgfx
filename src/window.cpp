@@ -60,6 +60,12 @@ GLFWwindow* Window::get() const {
 bool Window::isOpen() const {return window != nullptr && !glfwWindowShouldClose(window);}
 int Window::getWidth() const {return width;}
 int Window::getHeight() const {return height;}
+VkExtent2D Window::getExtent() const {
+    return {
+        static_cast<uint32_t>(width),
+        static_cast<uint32_t>(height)
+    };
+}
 
 bool Window::isVulkanSupported() {
     if (!glfwInit()) {

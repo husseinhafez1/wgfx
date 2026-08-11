@@ -33,6 +33,7 @@ public:
     [[nodiscard]] bool isOpen() const;
     [[nodiscard]] int getWidth() const;
     [[nodiscard]] int getHeight() const;
+    [[nodiscard]] VkExtent2D getExtent() const;
     [[nodiscard]] GraphicsBackend getBackend() const;
     [[nodiscard]] std::vector<const char*> getRequiredVulkanInstanceExtensions() const;
     [[nodiscard]] VkResult createVulkanSurface(

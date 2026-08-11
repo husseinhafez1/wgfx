@@ -137,13 +137,16 @@ add_executable(wgfx
     include/vulkan_device.h
     src/pipeline.cpp
     include/pipeline.h
+    src/swap_chain.cpp
+    include/swap_chain.h
+    src/vk_renderer.cpp
+    include/vk_renderer.h
 )
 add_dependencies(wgfx vulkan_shaders)
 target_compile_features(wgfx PRIVATE cxx_std_20)
 target_include_directories(wgfx PRIVATE include)
 target_compile_definitions(wgfx PRIVATE
     SHADER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/res/shaders/"
-    VULKAN_SHADER_DIR="${VULKAN_SHADER_DIRECTORY}/"
     MODEL_DIR="${CMAKE_CURRENT_SOURCE_DIR}/res/models/"
     CUBEMAP_DIR="${CMAKE_CURRENT_SOURCE_DIR}/res/cubemaps/"
 )

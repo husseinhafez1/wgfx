@@ -1,6 +1,5 @@
-#include <pipeline.h>
 #include <renderer.h>
-#include <vulkan_device.h>
+#include <vk_renderer.h>
 #include <window.h>
 
 #include <algorithm>
@@ -46,22 +45,9 @@ int runOpenGL() {
 }
 
 int runVulkan() {
-    wgfx::Window window("wgfx - Vulkan", 1200, 800, wgfx::GraphicsBackend::Vulkan);
-    if (!window.isOpen()) {
-        throw std::runtime_error("Failed to create a Vulkan-compatible window.");
-    }
-    wgfx::VulkanDevice device(window);
-    const wgfx::PipelineConfigInfo pipelineConfig =
-        wgfx::Pipeline::defaultPipelineConfigInfo(1200, 800);
-    wgfx::Pipeline pipeline(
-        device,
-        std::string(VULKAN_SHADER_DIR) + "basic.vert.spv",
-        std::string(VULKAN_SHADER_DIR) + "basic.frag.spv",
-        pipelineConfig
-    );
-    while (window.isOpen()) {
-        window.pollEvents();
-    }
+    wgfx::VkRenderer renderer;
+    renderer.init();
+    renderer.run();
     return 0;
 }
 } // namespace
