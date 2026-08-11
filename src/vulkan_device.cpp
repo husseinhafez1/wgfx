@@ -102,7 +102,7 @@ void VulkanDevice::createInstance() {
         .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
         .pEngineName = "wgfx",
         .engineVersion = VK_MAKE_VERSION(1, 0, 0),
-        .apiVersion = VK_API_VERSION_1_0
+        .apiVersion = VK_API_VERSION_1_3
     };
     const std::vector<const char*> extensions = getRequiredExtensions();
     VkInstanceCreateInfo createInfo{
@@ -200,10 +200,6 @@ void VulkanDevice::createLogicalDevice() {
         .ppEnabledExtensionNames = deviceExtensions.data(),
         .pEnabledFeatures = &features
     };
-    if (EnableValidationLayers) {
-        createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
-        createInfo.ppEnabledLayerNames = validationLayers.data();
-    }
     if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS) {
         throw std::runtime_error("Failed to create Vulkan logical device.");
     }

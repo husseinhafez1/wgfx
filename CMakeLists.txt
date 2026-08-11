@@ -135,6 +135,8 @@ add_executable(wgfx
     include/imgui_layer.h
     src/vulkan_device.cpp
     include/vulkan_device.h
+    src/pipeline.cpp
+    include/pipeline.h
 )
 add_dependencies(wgfx vulkan_shaders)
 target_compile_features(wgfx PRIVATE cxx_std_20)

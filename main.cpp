@@ -1,17 +1,14 @@
+#include <pipeline.h>
 #include <renderer.h>
+#include <vulkan_device.h>
 #include <window.h>
-
-#include <vulkan/vulkan_raii.hpp>
 
 #include <algorithm>
 #include <cctype>
-#include <cstdint>
 #include <exception>
 #include <iostream>
 #include <stdexcept>
 #include <string>
-#include <vector>
-#include <fstream>
 
 namespace {
 enum class BackendSelection {
@@ -19,31 +16,6 @@ enum class BackendSelection {
     OpenGL,
     Vulkan
 };
-
-static std::vector<char> readFile(const std::string& filePath) {
-    std::ifstream file(filePath, std::ios::ate | std::ios::binary);
-
-    if (!file.is_open()) {
-        throw std::runtime_error("failed to open file " + filePath);
-    }
-
-    size_t fileSize = static_cast<size_t>(file.tellg());
-    std::vector<char> buffer(fileSize);
-
-    file.seekg(0);
-    file.read(buffer.data(), fileSize);
-
-    file.close();
-    return buffer;
-}
-
-void createGraphicsPipeline(const std::string& vertFilePath, const std::string& fragFilePath) {
-    auto vertCode = readFile(vertFilePath);
-    auto fragCode = readFile(fragFilePath);
-
-    std::cout << "Vertex Shader Code size: " << vertCode.size() << std::endl;
-    std::cout << "Fragment Shader Code size: " << fragCode.size() << std::endl;
-}
 
 BackendSelection parseBackend(int argc, char** argv) {
     if (argc == 1) {
@@ -78,9 +50,14 @@ int runVulkan() {
     if (!window.isOpen()) {
         throw std::runtime_error("Failed to create a Vulkan-compatible window.");
     }
-    createGraphicsPipeline(
+    wgfx::VulkanDevice device(window);
+    const wgfx::PipelineConfigInfo pipelineConfig =
+        wgfx::Pipeline::defaultPipelineConfigInfo(1200, 800);
+    wgfx::Pipeline pipeline(
+        device,
         std::string(VULKAN_SHADER_DIR) + "basic.vert.spv",
-        std::string(VULKAN_SHADER_DIR) + "basic.frag.spv"
+        std::string(VULKAN_SHADER_DIR) + "basic.frag.spv",
+        pipelineConfig
     );
     while (window.isOpen()) {
         window.pollEvents();
