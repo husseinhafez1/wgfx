@@ -9,8 +9,8 @@ namespace wgfx {
 
 class Texture {
 public:
-    Texture(const std::string& path);
-    Texture(const unsigned char* encodedData, std::size_t size);
+    Texture(const std::string& path, bool srgb = true);
+    Texture(const unsigned char* encodedData, std::size_t size, bool srgb = true);
     ~Texture();
 
     Texture(const Texture&) = delete;
@@ -20,7 +20,7 @@ public:
     void unbind() const;
 
 private:
-    void upload(const unsigned char* pixels, int width, int height);
+    void upload(const unsigned char* pixels, int width, int height, bool srgb);
 
     unsigned int m_textureID = 0;
 };

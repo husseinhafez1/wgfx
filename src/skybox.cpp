@@ -100,7 +100,7 @@ void Skybox::loadAtlas(const std::string& cubemapAtlas) {
         glTexImage2D(
             GL_TEXTURE_CUBE_MAP_POSITIVE_X + static_cast<unsigned int>(face),
             0,
-            GL_RGBA8,
+            GL_SRGB8_ALPHA8,
             faceSize,
             faceSize,
             0,
@@ -137,7 +137,7 @@ void Skybox::loadFaces(const std::array<std::string, 6>& faces) {
         glTexImage2D(
             GL_TEXTURE_CUBE_MAP_POSITIVE_X + static_cast<unsigned int>(i),
             0,
-            GL_RGBA8,
+            GL_SRGB8_ALPHA8,
             width,
             height,
             0,

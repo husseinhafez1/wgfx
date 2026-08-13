@@ -222,39 +222,53 @@ Model::MeshData Model::loadGltf(const std::string& path) {
     }
 
     fastgltf::Asset asset = std::move(loadedAsset.get());
-    std::vector<std::shared_ptr<Texture>> imageTextures(asset.images.size());
-    for (std::size_t imageIndex = 0; imageIndex < asset.images.size(); ++imageIndex) {
+    std::vector<std::shared_ptr<Texture>> srgbImageTextures(asset.images.size());
+    std::vector<std::shared_ptr<Texture>> linearImageTextures(asset.images.size());
+    const auto loadImageTexture = [&](std::size_t imageIndex, bool srgb) -> std::shared_ptr<Texture> {
+        auto& cachedTexture = srgb
+            ? srgbImageTextures[imageIndex]
+            : linearImageTextures[imageIndex];
+        if (cachedTexture) {
+            return cachedTexture;
+        }
         try {
-            imageTextures[imageIndex] = std::visit(fastgltf::visitor {
+            cachedTexture = std::visit(fastgltf::visitor {
                 [&](const fastgltf::sources::URI& source) -> std::shared_ptr<Texture> {
                     if (source.fileByteOffset != 0 || !source.uri.isLocalPath()) {
                         return nullptr;
                     }
-                    return std::make_shared<Texture>((fullPath.parent_path() / source.uri.fspath()).string());
+                    return std::make_shared<Texture>(
+                        (fullPath.parent_path() / source.uri.fspath()).string(),
+                        srgb
+                    );
                 },
                 [&](const fastgltf::sources::Array& source) -> std::shared_ptr<Texture> {
                     return std::make_shared<Texture>(
                         reinterpret_cast<const unsigned char*>(source.bytes.data()),
-                        source.bytes.size()
+                        source.bytes.size(),
+                        srgb
                     );
                 },
                 [&](const fastgltf::sources::Vector& source) -> std::shared_ptr<Texture> {
                     return std::make_shared<Texture>(
                         reinterpret_cast<const unsigned char*>(source.bytes.data()),
-                        source.bytes.size()
+                        source.bytes.size(),
+                        srgb
                     );
                 },
                 [&](const fastgltf::sources::ByteView& source) -> std::shared_ptr<Texture> {
                     return std::make_shared<Texture>(
                         reinterpret_cast<const unsigned char*>(source.bytes.data()),
-                        source.bytes.size()
+                        source.bytes.size(),
+                        srgb
                     );
                 },
                 [&](const fastgltf::sources::BufferView& source) -> std::shared_ptr<Texture> {
                     const auto bytes = fastgltf::DefaultBufferDataAdapter{}(asset, source.bufferViewIndex);
                     return std::make_shared<Texture>(
                         reinterpret_cast<const unsigned char*>(bytes.data()),
-                        bytes.size()
+                        bytes.size(),
+                        srgb
                     );
                 },
                 [](const auto&) -> std::shared_ptr<Texture> {
@@ -265,7 +279,8 @@ Model::MeshData Model::loadGltf(const std::string& path) {
             std::cerr << "Failed to load image " << imageIndex << " from '" << fullPath.string()
                       << "': " << exception.what() << '\n';
         }
-    }
+        return cachedTexture;
+    };
 
     MeshData meshData;
     meshData.materials.emplace_back();
@@ -296,8 +311,11 @@ Model::MeshData Model::loadGltf(const std::string& path) {
             if (textureInfo.textureIndex < asset.textures.size()) {
                 const fastgltf::Texture& gltfTexture = asset.textures[textureInfo.textureIndex];
                 if (gltfTexture.imageIndex.has_value()
-                    && gltfTexture.imageIndex.value() < imageTextures.size()) {
-                    material.baseColorTexture = imageTextures[gltfTexture.imageIndex.value()];
+                    && gltfTexture.imageIndex.value() < asset.images.size()) {
+                    material.baseColorTexture = loadImageTexture(
+                        gltfTexture.imageIndex.value(),
+                        true
+                    );
                 }
             }
         }
@@ -310,8 +328,11 @@ Model::MeshData Model::loadGltf(const std::string& path) {
             if (textureInfo.textureIndex < asset.textures.size()) {
                 const fastgltf::Texture& gltfTexture = asset.textures[textureInfo.textureIndex];
                 if (gltfTexture.imageIndex.has_value()
-                    && gltfTexture.imageIndex.value() < imageTextures.size()) {
-                    material.metallicRoughnessTexture = imageTextures[gltfTexture.imageIndex.value()];
+                    && gltfTexture.imageIndex.value() < asset.images.size()) {
+                    material.metallicRoughnessTexture = loadImageTexture(
+                        gltfTexture.imageIndex.value(),
+                        false
+                    );
                 }
             }
         }

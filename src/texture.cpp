@@ -7,7 +7,7 @@
 
 namespace wgfx {
 
-Texture::Texture(const std::string& path) {
+Texture::Texture(const std::string& path, bool srgb) {
     int width;
     int height;
     int channels;
@@ -19,11 +19,11 @@ Texture::Texture(const std::string& path) {
         );
     }
 
-    upload(pixels, width, height);
+    upload(pixels, width, height, srgb);
     stbi_image_free(pixels);
 }
 
-Texture::Texture(const unsigned char* encodedData, std::size_t size) {
+Texture::Texture(const unsigned char* encodedData, std::size_t size, bool srgb) {
     if (size > static_cast<std::size_t>(std::numeric_limits<int>::max())) {
         throw std::runtime_error("Encoded texture is too large for stb_image.");
     }
@@ -46,18 +46,28 @@ Texture::Texture(const unsigned char* encodedData, std::size_t size) {
         );
     }
 
-    upload(pixels, width, height);
+    upload(pixels, width, height, srgb);
     stbi_image_free(pixels);
 }
 
-void Texture::upload(const unsigned char* pixels, int width, int height) {
+void Texture::upload(const unsigned char* pixels, int width, int height, bool srgb) {
     glGenTextures(1, &m_textureID);
     glBindTexture(GL_TEXTURE_2D, m_textureID);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
+        srgb ? GL_SRGB8_ALPHA8 : GL_RGBA8,
+        width,
+        height,
+        0,
+        GL_RGBA,
+        GL_UNSIGNED_BYTE,
+        pixels
+    );
     glGenerateMipmap(GL_TEXTURE_2D);
 }
 

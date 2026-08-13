@@ -14,7 +14,7 @@ Framebuffer::Framebuffer(int width, int height) : width(width), height(height) {
     glTexImage2DMultisample(
         GL_TEXTURE_2D_MULTISAMPLE,
         8,
-        GL_RGB8,
+        GL_RGBA16,
         width,
         height,
         GL_TRUE
@@ -54,12 +54,12 @@ Framebuffer::Framebuffer(int width, int height) : width(width), height(height) {
     glTexImage2D(
         GL_TEXTURE_2D,
         0,
-        GL_RGB8,
+        GL_RGBA16,
         width,
         height,
         0,
-        GL_RGB,
-        GL_UNSIGNED_BYTE,
+        GL_RGBA,
+        GL_UNSIGNED_SHORT,
         nullptr
     );
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

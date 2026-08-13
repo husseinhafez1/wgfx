@@ -18,7 +18,7 @@ uniform bool hasMetallicRoughnessTexture;
 
 void main() {
     vec4 textureColor = hasBaseColorTexture ? texture(baseColorTexture, vertexUV) : vec4(1.0);
-    vec3 albedo = baseColor.rgb * pow(textureColor.rgb, vec3(2.2));
+    vec3 albedo = baseColor.rgb * textureColor.rgb;
     float alpha = baseColor.a * textureColor.a;
 
     float surfaceMetallic = metallic;
@@ -43,6 +43,5 @@ void main() {
 
     vec3 color = direct + ambient * 0.35;
     color = color / (color + vec3(1.0));
-    color = pow(color, vec3(1.0 / 2.2));
     fragmentColor = vec4(color, alpha);
 }

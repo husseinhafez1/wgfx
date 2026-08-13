@@ -87,6 +87,7 @@ private:
     double lastMouseY = 0.0;
     bool rotating = false;
     bool msaaEnabled = true;
+    float gamma = 2.2f;
     bool initialized = false;
 };
 

@@ -133,6 +133,7 @@ void Renderer::init() {
     configurePbrShader();
     getShader(ShaderType::Framebuffer).use();
     getShader(ShaderType::Framebuffer).setUniform("screenTexture", 0);
+    getShader(ShaderType::Framebuffer).setUniform("gamma", gamma);
     renderStaticShadowMaps();
     initialized = true;
 }

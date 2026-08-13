@@ -7,6 +7,11 @@
 #include <string>
 
 namespace wgfx {
+namespace {
+glm::vec3 srgbToLinear(const glm::vec3& color) {
+    return glm::pow(color, glm::vec3(2.2f));
+}
+}
 
 void Lighting::setDirectionalLight(const DirectionalLight& light) {
     directionalLight = light;
@@ -85,7 +90,7 @@ void Lighting::upload(Shader& shader) const {
     shader.setUniform("hasDirectionalLight", hasDirectionalLight ? 1 : 0);
     if (hasDirectionalLight) {
         shader.setUniform("directionalLight.direction", glm::normalize(directionalLight.direction));
-        shader.setUniform("directionalLight.color", directionalLight.color);
+        shader.setUniform("directionalLight.color", srgbToLinear(directionalLight.color));
         shader.setUniform("directionalLight.intensity", directionalLight.intensity);
     }
 
@@ -94,7 +99,7 @@ void Lighting::upload(Shader& shader) const {
         const PointLight& light = pointLights[index];
         const std::string prefix = "pointLights[" + std::to_string(index) + "].";
         shader.setUniform(prefix + "position", light.position);
-        shader.setUniform(prefix + "color", light.color);
+        shader.setUniform(prefix + "color", srgbToLinear(light.color));
         shader.setUniform(prefix + "intensity", light.intensity);
         shader.setUniform(prefix + "range", light.range);
     }
@@ -105,7 +110,7 @@ void Lighting::upload(Shader& shader) const {
         const std::string prefix = "spotLights[" + std::to_string(index) + "].";
         shader.setUniform(prefix + "position", light.position);
         shader.setUniform(prefix + "direction", glm::normalize(light.direction));
-        shader.setUniform(prefix + "color", light.color);
+        shader.setUniform(prefix + "color", srgbToLinear(light.color));
         shader.setUniform(prefix + "intensity", light.intensity);
         shader.setUniform(prefix + "range", light.range);
         shader.setUniform(prefix + "innerConeCos", std::cos(glm::radians(light.innerConeAngle)));
