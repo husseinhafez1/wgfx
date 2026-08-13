@@ -59,7 +59,7 @@ void Renderer::init() {
     spotShadowMap = std::make_unique<SpotShadowMap>(1024);
     staticPointShadowMap = std::make_unique<PointShadowMap>(512);
     pointShadowMap = std::make_unique<PointShadowMap>(512);
-    models.emplace(ModelType::Sponza, std::make_unique<Model>("sponza/sponza.glb"));
+    models.emplace(ModelType::Sponza, std::make_unique<Model>("sponza/Sponza.gltf"));
     models.emplace(
         ModelType::DamagedHelmet,
         std::make_unique<Model>("helmet/DamagedHelmet.glb")

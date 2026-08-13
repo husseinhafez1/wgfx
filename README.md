@@ -34,7 +34,7 @@ A small C++17 graphics library built with OpenGL, GLFW, GLAD, GLM, and CMake.
 
 ## Assets
 
-- [Sponza Optimized](https://github.com/toji/sponza-optimized)
+- [Sponza](https://github.com/KhronosGroup/glTF-Sample-Models/tree/main/2.0/Sponza)
 - [Damaged Helmet](https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/DamagedHelmet)
 - [Lava Assets](https://github.com/Breush/lava-assets)
 
