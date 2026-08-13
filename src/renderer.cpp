@@ -271,7 +271,12 @@ void Renderer::renderFrame(const glm::mat4& view, const glm::mat4& projection) {
     }
     glDisable(GL_POLYGON_OFFSET_FILL);
 
-    framebuffer->bind();
+    framebuffer->bind(msaaEnabled);
+    if (msaaEnabled) {
+        glEnable(GL_MULTISAMPLE);
+    } else {
+        glDisable(GL_MULTISAMPLE);
+    }
     glViewport(0, 0, window->getWidth(), window->getHeight());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -291,6 +296,7 @@ void Renderer::renderFrame(const glm::mat4& view, const glm::mat4& projection) {
 }
 
 void Renderer::renderFramebuffer() {
+    framebuffer->resolve(msaaEnabled);
     Framebuffer::unbind();
     glViewport(0, 0, window->getWidth(), window->getHeight());
     glClear(GL_COLOR_BUFFER_BIT);
@@ -344,7 +350,11 @@ void Renderer::renderDirectionalShadowMap(
 
 void Renderer::renderGui() {
     bool vsyncEnabled = window->isVSyncEnabled();
-    const ImGuiLayerChanges changes = gui->drawRendererPanel(vsyncEnabled, *lighting);
+    const ImGuiLayerChanges changes = gui->drawRendererPanel(
+        vsyncEnabled,
+        msaaEnabled,
+        *lighting
+    );
     if (changes.vsyncChanged) {
         window->setVSync(vsyncEnabled);
     }

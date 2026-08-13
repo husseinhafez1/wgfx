@@ -8,6 +8,7 @@ class Lighting;
 
 struct ImGuiLayerChanges {
     bool vsyncChanged = false;
+    bool msaaChanged = false;
     bool lightingChanged = false;
     bool shadowConfigurationChanged = false;
 };
@@ -21,7 +22,11 @@ public:
     ImGuiLayer& operator=(const ImGuiLayer&) = delete;
 
     void beginFrame();
-    ImGuiLayerChanges drawRendererPanel(bool& vsyncEnabled, Lighting& lighting);
+    ImGuiLayerChanges drawRendererPanel(
+        bool& vsyncEnabled,
+        bool& msaaEnabled,
+        Lighting& lighting
+    );
     void endFrame();
     [[nodiscard]] bool wantsMouseCapture() const;
     [[nodiscard]] bool wantsKeyboardCapture() const;

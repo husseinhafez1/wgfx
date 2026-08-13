@@ -1,6 +1,6 @@
 # wgfx
 
-A small C++17 graphics library built with OpenGL, GLFW, GLAD, GLM, and CMake.
+A C++20 graphics project with OpenGL and Vulkan backends, built with GLFW, GLAD, GLM, the Vulkan SDK, and CMake.
 
 ![Sponza and helmet render](images/sponza_helmet.png)
 ![Sponza and helmet spotlight render](images/sponza_helmet_spot.png)
@@ -18,8 +18,13 @@ A small C++17 graphics library built with OpenGL, GLFW, GLAD, GLM, and CMake.
 - Hardware-filtered PCF shadow sampling
 - Hybrid static and dynamic shadow-map rendering
 - Reusable GLSL lighting code through relative shader includes
-- Dockable Dear ImGui controls for lights, performance, and runtime VSync
+- Off-screen OpenGL rendering with a 3x3 edge-detection post-processing kernel
+- Runtime-selectable 8x MSAA with a multisampled scene FBO and single-sample post-processing FBO
+- RAII wrappers for OpenGL VAOs, VBOs, EBOs, and framebuffers
+- Dockable Dear ImGui controls for lights, performance, VSync, and MSAA
 - Camera and input controls
+- Vulkan device, swap chain, render pass, graphics pipeline, command buffers, and synchronized presentation
+- Automatic Vulkan GLSL-to-SPIR-V compilation through `glslc`
 
 ## Dependencies
 
@@ -48,18 +53,18 @@ cmake --build build-clang
 
 ## Backend Selection
 
-- `wgfx.exe -V` or `wgfx.exe -Vulkan`: Force the Vulkan bootstrap
+- `wgfx.exe -V` or `wgfx.exe -Vulkan`: Force the Vulkan renderer
 - `wgfx.exe -O` or `wgfx.exe -OpenGL`: Force the OpenGL renderer
 - `wgfx.exe`: Prefer Vulkan when a loader and compatible driver are available, otherwise fall back to OpenGL
 
-The Vulkan path currently creates a no-API window and Vulkan instance. Rendering is still implemented by the OpenGL backend.
+The OpenGL renderer contains the full PBR scene, shadows, ImGui controls, and framebuffer post-processing. The Vulkan renderer currently draws a basic triangle through its swap chain and graphics pipeline, can't resize right now the Vulkan window, resizing will end up falling back the OpenGL renderer.
 
 ## Project Layout
 
 - `include/`: Public C++ headers
 - `src/`: C++ implementation files
-- `res/shaders/GL/`: OpenGL shaders and shared shader includes
-- `res/shaders/vulkan/`: Vulkan sources and generated `*.spirv` binaries
+- `res/shaders/GL/`: OpenGL shaders, post-processing shaders, and shared shader includes
+- `res/shaders/vulkan/`: Vulkan GLSL sources and generated `*.spv` binaries
 - `main.cpp`: Application entry point
 
 All library-owned C++ APIs are declared in the `wgfx` namespace.
@@ -70,13 +75,14 @@ All library-owned C++ APIs are declared in the `wgfx` namespace.
 - `Q`, `E`: Move up and down
 - Left mouse drag: Look around
 - `Escape`: Close the application
+- Renderer panel: Toggle VSync and 8x MSAA at runtime
 
 ## Next
 
 - [ ] Implement SSAO
 - [ ] Improve PBR and environment lighting
 - [ ] HDR
-- [ ] MSAA
+- [ ] Vulkan swap-chain recreation and resize handling
 
 ## References
 - [LearnOpenGL](https://learnopengl.com/)

@@ -86,6 +86,7 @@ private:
     double lastMouseX = 0.0;
     double lastMouseY = 0.0;
     bool rotating = false;
+    bool msaaEnabled = true;
     bool initialized = false;
 };
 

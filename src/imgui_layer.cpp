@@ -48,7 +48,11 @@ void ImGuiLayer::beginFrame() {
     );
 }
 
-ImGuiLayerChanges ImGuiLayer::drawRendererPanel(bool& vsyncEnabled, Lighting& lighting) {
+ImGuiLayerChanges ImGuiLayer::drawRendererPanel(
+    bool& vsyncEnabled,
+    bool& msaaEnabled,
+    Lighting& lighting
+) {
     const ImGuiViewport* viewport = ImGui::GetMainViewport();
     constexpr float panelWidth = 280.0f;
     ImGui::SetNextWindowPos(
@@ -62,6 +66,7 @@ ImGuiLayerChanges ImGuiLayer::drawRendererPanel(bool& vsyncEnabled, Lighting& li
     ImGui::Begin("Renderer");
     ImGuiLayerChanges changes;
     changes.vsyncChanged = ImGui::Checkbox("VSync", &vsyncEnabled);
+    changes.msaaChanged = ImGui::Checkbox("8x MSAA", &msaaEnabled);
     const ImGuiIO& io = ImGui::GetIO();
     ImGui::Text("Frame time: %.2f ms", 1000.0f / io.Framerate);
     ImGui::Text("FPS: %.1f", io.Framerate);
