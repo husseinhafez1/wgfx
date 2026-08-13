@@ -9,6 +9,8 @@ namespace wgfx {
 
 class Camera;
 class DirectionalShadowMap;
+class EBO;
+class Framebuffer;
 class Input;
 class ImGuiLayer;
 class Lighting;
@@ -17,6 +19,8 @@ class PointShadowMap;
 class Shader;
 class Skybox;
 class SpotShadowMap;
+class VAO;
+class VBO;
 class Window;
 
 class Renderer {
@@ -33,6 +37,7 @@ public:
 private:
     enum class ShaderType {
         Pbr,
+        Framebuffer,
         PointShadow,
         Shadow
     };
@@ -48,6 +53,7 @@ private:
     void updateShadowMaps();
     void processInput(float deltaTime);
     void renderFrame(const glm::mat4& view, const glm::mat4& projection);
+    void renderFramebuffer();
     void renderGui();
     void renderStaticShadowMaps();
     void renderDirectionalShadowMap(const glm::mat4& view, const glm::mat4& projection);
@@ -62,6 +68,10 @@ private:
     std::unique_ptr<Camera> camera;
     std::unique_ptr<Input> input;
     std::unique_ptr<Lighting> lighting;
+    std::unique_ptr<Framebuffer> framebuffer;
+    std::unique_ptr<VAO> framebufferVao;
+    std::unique_ptr<VBO> framebufferVbo;
+    std::unique_ptr<EBO> framebufferEbo;
     std::unordered_map<ShaderType, std::unique_ptr<Shader>> shaders;
     std::unordered_map<ModelType, std::unique_ptr<Model>> models;
     std::unique_ptr<Skybox> skybox;

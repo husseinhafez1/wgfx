@@ -113,6 +113,8 @@ add_executable(wgfx
     include/input.h
     src/buffer.cpp
     include/buffer.h
+    src/framebuffer.cpp
+    include/framebuffer.h
     src/model.cpp
     include/model.h
     src/texture.cpp

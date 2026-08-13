@@ -5,7 +5,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "camera.h"
+#include "buffer.h"
 #include "directional_shadow_map.h"
+#include "framebuffer.h"
 #include "input.h"
 #include "imgui_layer.h"
 #include "lighting.h"
@@ -21,6 +23,19 @@
 #include <string>
 
 namespace wgfx {
+namespace {
+constexpr float FramebufferVertices[] = {
+    -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
+     1.0f, -1.0f, 0.0f, 1.0f, 0.0f,
+     1.0f,  1.0f, 0.0f, 1.0f, 1.0f,
+    -1.0f,  1.0f, 0.0f, 0.0f, 1.0f
+};
+
+constexpr unsigned int FramebufferIndices[] = {
+    0, 1, 2,
+    2, 3, 0
+};
+}
 
 Renderer::Renderer() = default;
 
@@ -42,6 +57,18 @@ void Renderer::init() {
     camera = std::make_unique<Camera>();
     input = std::make_unique<Input>();
     lighting = std::make_unique<Lighting>();
+    framebuffer = std::make_unique<Framebuffer>(window->getWidth(), window->getHeight());
+    framebufferVao = std::make_unique<VAO>();
+    framebufferVbo = std::make_unique<VBO>(FramebufferVertices, sizeof(FramebufferVertices));
+    framebufferEbo = std::make_unique<EBO>(FramebufferIndices, sizeof(FramebufferIndices));
+    framebufferVao->linkVBO(*framebufferVbo, 0, 3, 5 * sizeof(float));
+    framebufferVao->linkVBO(*framebufferVbo, 1, 2, 5 * sizeof(float), 3 * sizeof(float));
+    framebufferVao->bind();
+    framebufferEbo->bind();
+    shaders.emplace(
+        ShaderType::Framebuffer,
+        std::make_unique<Shader>("GL/framebuffer.vert.glsl", "GL/framebuffer.frag.glsl")
+    );
     shaders.emplace(
         ShaderType::Pbr,
         std::make_unique<Shader>("GL/pbr.vert.glsl", "GL/pbr.frag.glsl")
@@ -104,6 +131,8 @@ void Renderer::init() {
     pointShadowMap->update(helmetPointLight);
 
     configurePbrShader();
+    getShader(ShaderType::Framebuffer).use();
+    getShader(ShaderType::Framebuffer).setUniform("screenTexture", 0);
     renderStaticShadowMaps();
     initialized = true;
 }
@@ -126,6 +155,7 @@ void Renderer::run() {
             );
         }
         renderFrame(camera->getViewMatrix(), camera->getProjectionMatrix());
+        renderFramebuffer();
         renderGui();
         window->pollEvents();
     }
@@ -241,7 +271,7 @@ void Renderer::renderFrame(const glm::mat4& view, const glm::mat4& projection) {
     }
     glDisable(GL_POLYGON_OFFSET_FILL);
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    framebuffer->bind();
     glViewport(0, 0, window->getWidth(), window->getHeight());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -258,6 +288,21 @@ void Renderer::renderFrame(const glm::mat4& view, const glm::mat4& projection) {
     }
     drawScene(shader);
     skybox->draw(view, projection);
+}
+
+void Renderer::renderFramebuffer() {
+    Framebuffer::unbind();
+    glViewport(0, 0, window->getWidth(), window->getHeight());
+    glClear(GL_COLOR_BUFFER_BIT);
+    glDisable(GL_DEPTH_TEST);
+
+    Shader& shader = getShader(ShaderType::Framebuffer);
+    shader.use();
+    framebuffer->bindColorTexture(0);
+    framebufferVao->bind();
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
+    glEnable(GL_DEPTH_TEST);
 }
 
 void Renderer::renderDirectionalShadowMap(
