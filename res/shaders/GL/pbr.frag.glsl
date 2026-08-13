@@ -42,6 +42,5 @@ void main() {
     );
 
     vec3 color = direct + ambient * 0.35;
-    color = color / (color + vec3(1.0));
     fragmentColor = vec4(color, alpha);
 }

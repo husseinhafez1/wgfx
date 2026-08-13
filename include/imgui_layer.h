@@ -25,6 +25,9 @@ public:
     ImGuiLayerChanges drawRendererPanel(
         bool& vsyncEnabled,
         bool& msaaEnabled,
+        bool& bloomEnabled,
+        float& exposure,
+        float& bloomThreshold,
         Lighting& lighting
     );
     void endFrame();

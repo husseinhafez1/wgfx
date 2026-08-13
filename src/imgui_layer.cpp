@@ -51,6 +51,9 @@ void ImGuiLayer::beginFrame() {
 ImGuiLayerChanges ImGuiLayer::drawRendererPanel(
     bool& vsyncEnabled,
     bool& msaaEnabled,
+    bool& bloomEnabled,
+    float& exposure,
+    float& bloomThreshold,
     Lighting& lighting
 ) {
     const ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -67,6 +70,11 @@ ImGuiLayerChanges ImGuiLayer::drawRendererPanel(
     ImGuiLayerChanges changes;
     changes.vsyncChanged = ImGui::Checkbox("VSync", &vsyncEnabled);
     changes.msaaChanged = ImGui::Checkbox("8x MSAA", &msaaEnabled);
+    ImGui::Checkbox("Bloom", &bloomEnabled);
+    if (bloomEnabled) {
+        ImGui::DragFloat("Exposure", &exposure, 0.01f, 0.0f, 10.0f, "%.2f");
+        ImGui::DragFloat("Bloom threshold", &bloomThreshold, 0.05f, 0.0f, 100.0f, "%.2f");
+    }
     const ImGuiIO& io = ImGui::GetIO();
     ImGui::Text("Frame time: %.2f ms", 1000.0f / io.Framerate);
     ImGui::Text("FPS: %.1f", io.Framerate);

@@ -18,6 +18,10 @@ public:
     static void unbind();
     void resolve(bool msaaEnabled) const;
     void bindColorTexture(unsigned int slot = 0) const;
+    void bindBloomExtraction() const;
+    void bindBloomBlur(unsigned int index) const;
+    void bindBrightTexture(unsigned int slot = 0) const;
+    void bindBloomTexture(unsigned int index, unsigned int slot = 0) const;
     void bindRenderbuffer() const;
     static void unbindRenderbuffer();
 
@@ -28,6 +32,10 @@ private:
     unsigned int postProcessingRenderbufferId = 0;
     unsigned int colorTextureId = 0;
     unsigned int postProcessingTextureId = 0;
+    unsigned int brightId = 0;
+    unsigned int brightTextureId = 0;
+    unsigned int bloomIds[2]{};
+    unsigned int bloomTextureIds[2]{};
     int width = 0;
     int height = 0;
 };

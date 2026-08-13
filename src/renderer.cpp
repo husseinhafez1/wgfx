@@ -70,6 +70,14 @@ void Renderer::init() {
         std::make_unique<Shader>("GL/framebuffer.vert.glsl", "GL/framebuffer.frag.glsl")
     );
     shaders.emplace(
+        ShaderType::BloomExtract,
+        std::make_unique<Shader>("GL/framebuffer.vert.glsl", "GL/bloom_extract.frag.glsl")
+    );
+    shaders.emplace(
+        ShaderType::BloomBlur,
+        std::make_unique<Shader>("GL/framebuffer.vert.glsl", "GL/bloom_blur.frag.glsl")
+    );
+    shaders.emplace(
         ShaderType::Pbr,
         std::make_unique<Shader>("GL/pbr.vert.glsl", "GL/pbr.frag.glsl")
     );
@@ -133,7 +141,11 @@ void Renderer::init() {
     configurePbrShader();
     getShader(ShaderType::Framebuffer).use();
     getShader(ShaderType::Framebuffer).setUniform("screenTexture", 0);
-    getShader(ShaderType::Framebuffer).setUniform("gamma", gamma);
+    getShader(ShaderType::Framebuffer).setUniform("bloomTexture", 1);
+    getShader(ShaderType::BloomExtract).use();
+    getShader(ShaderType::BloomExtract).setUniform("scene", 0);
+    getShader(ShaderType::BloomBlur).use();
+    getShader(ShaderType::BloomBlur).setUniform("image", 0);
     renderStaticShadowMaps();
     initialized = true;
 }
@@ -298,18 +310,55 @@ void Renderer::renderFrame(const glm::mat4& view, const glm::mat4& projection) {
 
 void Renderer::renderFramebuffer() {
     framebuffer->resolve(msaaEnabled);
+    glDisable(GL_DEPTH_TEST);
+    const unsigned int bloomTextureIndex = bloomEnabled ? renderBloom() : 0;
     Framebuffer::unbind();
     glViewport(0, 0, window->getWidth(), window->getHeight());
     glClear(GL_COLOR_BUFFER_BIT);
-    glDisable(GL_DEPTH_TEST);
-
     Shader& shader = getShader(ShaderType::Framebuffer);
     shader.use();
+    shader.setUniform("bloomEnabled", bloomEnabled ? 1 : 0);
+    shader.setUniform("exposure", exposure);
+    shader.setUniform("gamma", gamma);
     framebuffer->bindColorTexture(0);
+    if (bloomEnabled) {
+        framebuffer->bindBloomTexture(bloomTextureIndex, 1);
+    }
     framebufferVao->bind();
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
     glEnable(GL_DEPTH_TEST);
+}
+
+unsigned int Renderer::renderBloom() {
+    framebuffer->bindBloomExtraction();
+    glClear(GL_COLOR_BUFFER_BIT);
+    Shader& extractShader = getShader(ShaderType::BloomExtract);
+    extractShader.use();
+    extractShader.setUniform("threshold", bloomThreshold);
+    framebuffer->bindColorTexture(0);
+    framebufferVao->bind();
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
+    constexpr int BlurPassCount = 10;
+    bool horizontal = true;
+    bool firstPass = true;
+    Shader& blurShader = getShader(ShaderType::BloomBlur);
+    blurShader.use();
+    for (int pass = 0; pass < BlurPassCount; ++pass) {
+        const unsigned int targetIndex = horizontal ? 1u : 0u;
+        framebuffer->bindBloomBlur(targetIndex);
+        blurShader.setUniform("horizontal", horizontal ? 1 : 0);
+        if (firstPass) {
+            framebuffer->bindBrightTexture(0);
+            firstPass = false;
+        } else {
+            framebuffer->bindBloomTexture(1u - targetIndex, 0);
+        }
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+        horizontal = !horizontal;
+    }
+    return horizontal ? 0u : 1u;
 }
 
 void Renderer::renderDirectionalShadowMap(
@@ -354,6 +403,9 @@ void Renderer::renderGui() {
     const ImGuiLayerChanges changes = gui->drawRendererPanel(
         vsyncEnabled,
         msaaEnabled,
+        bloomEnabled,
+        exposure,
+        bloomThreshold,
         *lighting
     );
     if (changes.vsyncChanged) {

@@ -38,6 +38,8 @@ private:
     enum class ShaderType {
         Pbr,
         Framebuffer,
+        BloomExtract,
+        BloomBlur,
         PointShadow,
         Shadow
     };
@@ -54,6 +56,7 @@ private:
     void processInput(float deltaTime);
     void renderFrame(const glm::mat4& view, const glm::mat4& projection);
     void renderFramebuffer();
+    unsigned int renderBloom();
     void renderGui();
     void renderStaticShadowMaps();
     void renderDirectionalShadowMap(const glm::mat4& view, const glm::mat4& projection);
@@ -87,6 +90,9 @@ private:
     double lastMouseY = 0.0;
     bool rotating = false;
     bool msaaEnabled = true;
+    bool bloomEnabled = false;
+    float exposure = 0.1f;
+    float bloomThreshold = 1.0f;
     float gamma = 2.2f;
     bool initialized = false;
 };

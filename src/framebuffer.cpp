@@ -14,7 +14,7 @@ Framebuffer::Framebuffer(int width, int height) : width(width), height(height) {
     glTexImage2DMultisample(
         GL_TEXTURE_2D_MULTISAMPLE,
         8,
-        GL_RGBA16,
+        GL_RGBA16F,
         width,
         height,
         GL_TRUE
@@ -54,12 +54,12 @@ Framebuffer::Framebuffer(int width, int height) : width(width), height(height) {
     glTexImage2D(
         GL_TEXTURE_2D,
         0,
-        GL_RGBA16,
+        GL_RGBA16F,
         width,
         height,
         0,
         GL_RGBA,
-        GL_UNSIGNED_SHORT,
+        GL_FLOAT,
         nullptr
     );
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -83,11 +83,53 @@ Framebuffer::Framebuffer(int width, int height) : width(width), height(height) {
     if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
         throw std::runtime_error("Failed to create a complete OpenGL post-processing framebuffer.");
     }
+
+    glGenFramebuffers(1, &brightId);
+    glBindFramebuffer(GL_FRAMEBUFFER, brightId);
+    glGenTextures(1, &brightTextureId);
+    glBindTexture(GL_TEXTURE_2D, brightTextureId);
+    glTexImage2D(
+        GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr
+    );
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glFramebufferTexture2D(
+        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, brightTextureId, 0
+    );
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        throw std::runtime_error("Failed to create the bloom extraction framebuffer.");
+    }
+
+    glGenFramebuffers(2, bloomIds);
+    glGenTextures(2, bloomTextureIds);
+    for (unsigned int index = 0; index < 2; ++index) {
+        glBindFramebuffer(GL_FRAMEBUFFER, bloomIds[index]);
+        glBindTexture(GL_TEXTURE_2D, bloomTextureIds[index]);
+        glTexImage2D(
+            GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr
+        );
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glFramebufferTexture2D(
+            GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, bloomTextureIds[index], 0
+        );
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+            throw std::runtime_error("Failed to create a bloom blur framebuffer.");
+        }
+    }
     unbindRenderbuffer();
     unbind();
 }
 
 Framebuffer::~Framebuffer() {
+    glDeleteTextures(2, bloomTextureIds);
+    if (brightTextureId != 0) {
+        glDeleteTextures(1, &brightTextureId);
+    }
     if (postProcessingTextureId != 0) {
         glDeleteTextures(1, &postProcessingTextureId);
     }
@@ -106,6 +148,10 @@ Framebuffer::~Framebuffer() {
     if (postProcessingId != 0) {
         glDeleteFramebuffers(1, &postProcessingId);
     }
+    glDeleteFramebuffers(2, bloomIds);
+    if (brightId != 0) {
+        glDeleteFramebuffers(1, &brightId);
+    }
 }
 
 Framebuffer::Framebuffer(Framebuffer&& other) noexcept
@@ -115,8 +161,15 @@ Framebuffer::Framebuffer(Framebuffer&& other) noexcept
       postProcessingRenderbufferId(std::exchange(other.postProcessingRenderbufferId, 0)),
       colorTextureId(std::exchange(other.colorTextureId, 0)),
       postProcessingTextureId(std::exchange(other.postProcessingTextureId, 0)),
+      brightId(std::exchange(other.brightId, 0)),
+      brightTextureId(std::exchange(other.brightTextureId, 0)),
       width(std::exchange(other.width, 0)),
-      height(std::exchange(other.height, 0)) {}
+      height(std::exchange(other.height, 0)) {
+    for (unsigned int index = 0; index < 2; ++index) {
+        bloomIds[index] = std::exchange(other.bloomIds[index], 0);
+        bloomTextureIds[index] = std::exchange(other.bloomTextureIds[index], 0);
+    }
+}
 
 Framebuffer& Framebuffer::operator=(Framebuffer&& other) noexcept {
     if (this != &other) {
@@ -138,12 +191,26 @@ Framebuffer& Framebuffer::operator=(Framebuffer&& other) noexcept {
         if (postProcessingTextureId != 0) {
             glDeleteTextures(1, &postProcessingTextureId);
         }
+        glDeleteTextures(2, bloomTextureIds);
+        if (brightTextureId != 0) {
+            glDeleteTextures(1, &brightTextureId);
+        }
+        glDeleteFramebuffers(2, bloomIds);
+        if (brightId != 0) {
+            glDeleteFramebuffers(1, &brightId);
+        }
         id = std::exchange(other.id, 0);
         postProcessingId = std::exchange(other.postProcessingId, 0);
         renderbufferId = std::exchange(other.renderbufferId, 0);
         postProcessingRenderbufferId = std::exchange(other.postProcessingRenderbufferId, 0);
         colorTextureId = std::exchange(other.colorTextureId, 0);
         postProcessingTextureId = std::exchange(other.postProcessingTextureId, 0);
+        brightId = std::exchange(other.brightId, 0);
+        brightTextureId = std::exchange(other.brightTextureId, 0);
+        for (unsigned int index = 0; index < 2; ++index) {
+            bloomIds[index] = std::exchange(other.bloomIds[index], 0);
+            bloomTextureIds[index] = std::exchange(other.bloomTextureIds[index], 0);
+        }
         width = std::exchange(other.width, 0);
         height = std::exchange(other.height, 0);
     }
@@ -181,6 +248,24 @@ void Framebuffer::resolve(bool msaaEnabled) const {
 void Framebuffer::bindColorTexture(unsigned int slot) const {
     glActiveTexture(GL_TEXTURE0 + slot);
     glBindTexture(GL_TEXTURE_2D, postProcessingTextureId);
+}
+
+void Framebuffer::bindBloomExtraction() const {
+    glBindFramebuffer(GL_FRAMEBUFFER, brightId);
+}
+
+void Framebuffer::bindBloomBlur(unsigned int index) const {
+    glBindFramebuffer(GL_FRAMEBUFFER, bloomIds[index]);
+}
+
+void Framebuffer::bindBrightTexture(unsigned int slot) const {
+    glActiveTexture(GL_TEXTURE0 + slot);
+    glBindTexture(GL_TEXTURE_2D, brightTextureId);
+}
+
+void Framebuffer::bindBloomTexture(unsigned int index, unsigned int slot) const {
+    glActiveTexture(GL_TEXTURE0 + slot);
+    glBindTexture(GL_TEXTURE_2D, bloomTextureIds[index]);
 }
 
 void Framebuffer::bindRenderbuffer() const {
