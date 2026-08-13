@@ -2,9 +2,54 @@
 
 A C++20 graphics project with OpenGL and Vulkan backends, built with GLFW, GLAD, GLM, the Vulkan SDK, and CMake.
 
-![Sponza and helmet render](images/sponza_helmet.png)
-![Sponza and helmet spotlight render](images/sponza_helmet_spot.png)
-![Sponza and helmet spotlight and point-light render](images/sponza_helmet_point.png)
+## Screenshots
+
+### Bloom
+
+<table>
+  <tr>
+    <th>Bloom disabled</th>
+    <th>Bloom enabled</th>
+  </tr>
+  <tr>
+    <td><img src="images/no_bloom.png" alt="OpenGL scene without bloom"></td>
+    <td><img src="images/bloom.png" alt="OpenGL scene with HDR bloom"></td>
+  </tr>
+</table>
+
+### Multisampling
+
+<table>
+  <tr>
+    <th>MSAA disabled</th>
+    <th>8x MSAA enabled</th>
+  </tr>
+  <tr>
+    <td><img src="images/no_msaa.png" alt="OpenGL scene without MSAA"></td>
+    <td><img src="images/msaa.png" alt="OpenGL scene with 8x MSAA"></td>
+  </tr>
+</table>
+
+### Combined Post-Processing
+
+<table>
+  <tr>
+    <th>Bloom and MSAA disabled</th>
+    <th>Bloom and 8x MSAA enabled</th>
+  </tr>
+  <tr>
+    <td><img src="images/nothing_enabled.png" alt="OpenGL scene without bloom or MSAA"></td>
+    <td><img src="images/both_enabled.png" alt="OpenGL scene with bloom and 8x MSAA"></td>
+  </tr>
+</table>
+
+### Vulkan Backend
+
+The Vulkan renderer currently presents a basic triangle while the backend infrastructure is developed.
+
+<p align="center">
+  <img src="images/vk_triangle.png" alt="Vulkan triangle renderer" width="70%">
+</p>
 
 ## Current Features
 
@@ -18,10 +63,10 @@ A C++20 graphics project with OpenGL and Vulkan backends, built with GLFW, GLAD,
 - Hardware-filtered PCF shadow sampling
 - Hybrid static and dynamic shadow-map rendering
 - Reusable GLSL lighting code through relative shader includes
-- Off-screen OpenGL rendering with a 3x3 edge-detection post-processing kernel
+- HDR rendering with exposure tone mapping and optional Gaussian-blurred bloom
 - Runtime-selectable 8x MSAA with a multisampled scene FBO and single-sample post-processing FBO
 - RAII wrappers for OpenGL VAOs, VBOs, EBOs, and framebuffers
-- Dockable Dear ImGui controls for lights, performance, VSync, and MSAA
+- Dockable Dear ImGui controls for lights, performance, VSync, MSAA, bloom, exposure, and bloom threshold
 - Camera and input controls
 - Vulkan device, swap chain, render pass, graphics pipeline, command buffers, and synchronized presentation
 - Automatic Vulkan GLSL-to-SPIR-V compilation through `glslc`
@@ -75,13 +120,12 @@ All library-owned C++ APIs are declared in the `wgfx` namespace.
 - `Q`, `E`: Move up and down
 - Left mouse drag: Look around
 - `Escape`: Close the application
-- Renderer panel: Toggle VSync and 8x MSAA at runtime
+- Renderer panel: Toggle VSync, 8x MSAA, and bloom; adjust exposure and bloom threshold
 
 ## Next
 
 - [ ] Implement SSAO
 - [ ] Improve PBR and environment lighting
-- [ ] HDR
 - [ ] Vulkan swap-chain recreation and resize handling
 
 ## References
