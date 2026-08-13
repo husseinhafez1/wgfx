@@ -1,96 +1,193 @@
 #include "buffer.h"
 
+#include <stdexcept>
+#include <utility>
+
 namespace wgfx {
 
-Buffer::Buffer(BufferType type, const void* data, std::size_t size)
-    : size(0), bufferId(0), type(type) {
-    glGenBuffers(1, &bufferId);
-    setData(data, size);
+VAO::VAO() {
+    glGenVertexArrays(1, &id);
 }
 
-Buffer::Buffer(BufferType type, std::size_t size)
-    : Buffer(type, nullptr, size) {
+VAO::~VAO() {
+    if (id != 0) {
+        glDeleteVertexArrays(1, &id);
+    }
 }
 
-Buffer::Buffer(Buffer&& other) noexcept
-    : size(other.size), bufferId(other.bufferId), type(other.type) {
-    other.size = 0;
-    other.bufferId = 0;
-}
+VAO::VAO(VAO&& other) noexcept : id(std::exchange(other.id, 0)) {}
 
-Buffer& Buffer::operator=(Buffer&& other) noexcept {
+VAO& VAO::operator=(VAO&& other) noexcept {
     if (this != &other) {
-        if (bufferId != 0) {
-            glDeleteBuffers(1, &bufferId);
+        if (id != 0) {
+            glDeleteVertexArrays(1, &id);
         }
-
-        size = other.size;
-        bufferId = other.bufferId;
-        type = other.type;
-
-        other.size = 0;
-        other.bufferId = 0;
+        id = std::exchange(other.id, 0);
     }
     return *this;
 }
 
-Buffer::~Buffer() {
-    if (bufferId != 0) {
-        glDeleteBuffers(1, &bufferId);
-    }
+void VAO::bind() const {
+    glBindVertexArray(id);
 }
 
-BufferType Buffer::getType() const {
-    return type;
+void VAO::unbind() {
+    glBindVertexArray(0);
 }
 
-GLenum Buffer::getTarget() const {
-    switch (type) {
-        case BufferType::VertexBuffer:
-            return GL_ARRAY_BUFFER;
-        case BufferType::IndexBuffer:
-            return GL_ELEMENT_ARRAY_BUFFER;
-        case BufferType::UniformBuffer:
-            return GL_UNIFORM_BUFFER;
-    }
-
-    throw std::logic_error("Unknown buffer type.");
+void VAO::linkVBO(VBO& vbo, unsigned int layout) const {
+    linkVBO(vbo, layout, 3);
 }
 
-void Buffer::bind() const {
-    glBindBuffer(getTarget(), bufferId);
-}
-
-void Buffer::unbind() const {
-    glBindBuffer(getTarget(), 0);
-}
-
-void Buffer::bindBase(unsigned int bindingPoint) const {
-    if (type != BufferType::UniformBuffer) {
-        throw std::logic_error("Only uniform buffers can be bound to a binding point.");
-    }
-
-    glBindBufferBase(GL_UNIFORM_BUFFER, bindingPoint, bufferId);
-}
-
-void Buffer::setData(const void* data, std::size_t size) {
-    this->size = size;
+void VAO::linkVBO(
+    VBO& vbo,
+    unsigned int layout,
+    int componentCount,
+    GLsizei stride,
+    std::size_t offset
+) const {
     bind();
-    glBufferData(getTarget(), static_cast<GLsizeiptr>(size), data, GL_STATIC_DRAW);
+    vbo.bind();
+    glVertexAttribPointer(
+        layout,
+        componentCount,
+        GL_FLOAT,
+        GL_FALSE,
+        stride,
+        reinterpret_cast<const void*>(offset)
+    );
+    glEnableVertexAttribArray(layout);
+    VBO::unbind();
 }
 
-void Buffer::updateData(const void* data, std::size_t size, std::size_t offset) {
-    if (offset > this->size || size > this->size - offset) {
-        throw std::runtime_error("Buffer overflow: trying to update more data than the buffer can hold.");
-    }
+VBO::VBO(const void* data, std::size_t size) {
+    glGenBuffers(1, &id);
+    setData(data, size);
+}
 
+VBO::VBO(std::size_t size) : VBO(nullptr, size) {}
+
+VBO::~VBO() {
+    if (id != 0) {
+        glDeleteBuffers(1, &id);
+    }
+}
+
+VBO::VBO(VBO&& other) noexcept
+    : size(std::exchange(other.size, 0)), id(std::exchange(other.id, 0)) {}
+
+VBO& VBO::operator=(VBO&& other) noexcept {
+    if (this != &other) {
+        if (id != 0) {
+            glDeleteBuffers(1, &id);
+        }
+        size = std::exchange(other.size, 0);
+        id = std::exchange(other.id, 0);
+    }
+    return *this;
+}
+
+void VBO::bind() const {
+    glBindBuffer(GL_ARRAY_BUFFER, id);
+}
+
+void VBO::unbind() {
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+void VBO::setData(const void* data, std::size_t size) {
+    this->size = size;
+    GLint previousBuffer = 0;
+    glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &previousBuffer);
+    bind();
+    glBufferData(GL_ARRAY_BUFFER, static_cast<GLsizeiptr>(size), data, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, static_cast<unsigned int>(previousBuffer));
+}
+
+void VBO::updateData(const void* data, std::size_t size, std::size_t offset) {
+    if (offset > this->size || size > this->size - offset) {
+        throw std::runtime_error("VBO update exceeds allocated storage.");
+    }
+    GLint previousBuffer = 0;
+    glGetIntegerv(GL_ARRAY_BUFFER_BINDING, &previousBuffer);
     bind();
     glBufferSubData(
-        getTarget(),
+        GL_ARRAY_BUFFER,
         static_cast<GLintptr>(offset),
         static_cast<GLsizeiptr>(size),
         data
     );
+    glBindBuffer(GL_ARRAY_BUFFER, static_cast<unsigned int>(previousBuffer));
+}
+
+EBO::EBO(const void* data, std::size_t size) {
+    glGenBuffers(1, &id);
+    setData(data, size);
+}
+
+EBO::EBO(std::size_t size) : EBO(nullptr, size) {}
+
+EBO::~EBO() {
+    if (id != 0) {
+        glDeleteBuffers(1, &id);
+    }
+}
+
+EBO::EBO(EBO&& other) noexcept
+    : size(std::exchange(other.size, 0)), id(std::exchange(other.id, 0)) {}
+
+EBO& EBO::operator=(EBO&& other) noexcept {
+    if (this != &other) {
+        if (id != 0) {
+            glDeleteBuffers(1, &id);
+        }
+        size = std::exchange(other.size, 0);
+        id = std::exchange(other.id, 0);
+    }
+    return *this;
+}
+
+void EBO::bind() const {
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id);
+}
+
+void EBO::unbind() {
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+void EBO::setData(const void* data, std::size_t size) {
+    this->size = size;
+    GLint previousVertexArray = 0;
+    GLint previousBuffer = 0;
+    glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &previousVertexArray);
+    glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &previousBuffer);
+    glBindVertexArray(0);
+    bind();
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, static_cast<GLsizeiptr>(size), data, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindVertexArray(static_cast<unsigned int>(previousVertexArray));
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<unsigned int>(previousBuffer));
+}
+
+void EBO::updateData(const void* data, std::size_t size, std::size_t offset) {
+    if (offset > this->size || size > this->size - offset) {
+        throw std::runtime_error("EBO update exceeds allocated storage.");
+    }
+    GLint previousVertexArray = 0;
+    GLint previousBuffer = 0;
+    glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &previousVertexArray);
+    glGetIntegerv(GL_ELEMENT_ARRAY_BUFFER_BINDING, &previousBuffer);
+    glBindVertexArray(0);
+    bind();
+    glBufferSubData(
+        GL_ELEMENT_ARRAY_BUFFER,
+        static_cast<GLintptr>(offset),
+        static_cast<GLsizeiptr>(size),
+        data
+    );
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    glBindVertexArray(static_cast<unsigned int>(previousVertexArray));
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, static_cast<unsigned int>(previousBuffer));
 }
 
 } // namespace wgfx

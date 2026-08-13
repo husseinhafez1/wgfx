@@ -5,6 +5,7 @@
 #include <array>
 #include <string>
 
+#include "buffer.h"
 #include "shader.h"
 
 namespace wgfx {
@@ -30,8 +31,8 @@ private:
     void createGeometry();
 
     Shader shader;
-    unsigned int vao = 0;
-    unsigned int vbo = 0;
+    VAO vao;
+    VBO vbo{0};
     unsigned int cubemap = 0;
 };
 

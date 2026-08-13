@@ -167,13 +167,8 @@ void Skybox::bind(unsigned int slot) const {
 }
 
 void Skybox::createGeometry() {
-    glGenVertexArrays(1, &vao);
-    glGenBuffers(1, &vbo);
-    glBindVertexArray(vao);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), skyboxVertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+    vbo.setData(skyboxVertices, sizeof(skyboxVertices));
+    vao.linkVBO(vbo, 0);
 
     shader.use();
     shader.setUniform("skybox", 0);
@@ -181,8 +176,6 @@ void Skybox::createGeometry() {
 
 Skybox::~Skybox() {
     glDeleteTextures(1, &cubemap);
-    glDeleteBuffers(1, &vbo);
-    glDeleteVertexArrays(1, &vao);
 }
 
 void Skybox::draw(const glm::mat4& view, const glm::mat4& projection) {
@@ -201,7 +194,7 @@ void Skybox::draw(const glm::mat4& view, const glm::mat4& projection) {
     shader.setUniform("projection", projection);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, cubemap);
-    glBindVertexArray(vao);
+    vao.bind();
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
     if (cullingWasEnabled) {

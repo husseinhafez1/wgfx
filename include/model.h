@@ -47,11 +47,11 @@ private:
     static MeshData loadGltf(const std::string& path);
     static void calculateNormals(MeshData& meshData);
 
-    unsigned int vao;
-    Buffer vbo;
-    Buffer normalVbo;
-    Buffer uvVbo;
-    Buffer ebo;
+    VAO vao;
+    VBO vbo;
+    VBO normalVbo;
+    VBO uvVbo;
+    EBO ebo;
     std::size_t indexCount;
     std::vector<Material> materials;
     std::vector<Submesh> submeshes;

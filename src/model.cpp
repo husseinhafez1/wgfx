@@ -22,13 +22,6 @@
 namespace wgfx {
 
 namespace {
-unsigned int createVertexArray() {
-    unsigned int vao;
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-    return vao;
-}
-
 std::filesystem::path resolveModelPath(const std::string& path) {
     std::filesystem::path resolved(path);
     if (!resolved.is_absolute()) {
@@ -53,25 +46,18 @@ Model::Model(const std::string& path)
 }
 
 Model::Model(MeshData&& meshData)
-    : vao(createVertexArray()),
-      vbo(BufferType::VertexBuffer, meshData.vertices.data(), meshData.vertices.size() * sizeof(float)),
-      normalVbo(BufferType::VertexBuffer, meshData.normals.data(), meshData.normals.size() * sizeof(float)),
-      uvVbo(BufferType::VertexBuffer, meshData.uvs.data(), meshData.uvs.size() * sizeof(float)),
-      ebo(BufferType::IndexBuffer, meshData.indices.data(), meshData.indices.size() * sizeof(unsigned int)),
+    : vbo(meshData.vertices.data(), meshData.vertices.size() * sizeof(float)),
+      normalVbo(meshData.normals.data(), meshData.normals.size() * sizeof(float)),
+      uvVbo(meshData.uvs.data(), meshData.uvs.size() * sizeof(float)),
+      ebo(meshData.indices.data(), meshData.indices.size() * sizeof(unsigned int)),
       indexCount(meshData.indices.size()),
       materials(std::move(meshData.materials)),
       submeshes(std::move(meshData.submeshes)) {
-    vbo.bind();
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
-
-    normalVbo.bind();
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
-
-    uvVbo.bind();
-    glEnableVertexAttribArray(2);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), nullptr);
+    vao.linkVBO(vbo, 0);
+    vao.linkVBO(normalVbo, 1);
+    vao.linkVBO(uvVbo, 2, 2);
+    vao.bind();
+    ebo.bind();
 }
 
 Model::MeshData Model::loadModel(const std::string& path) {
@@ -507,15 +493,13 @@ void Model::calculateNormals(MeshData& meshData) {
     meshData.hasCompleteNormals = true;
 }
 
-Model::~Model() {
-    glDeleteVertexArrays(1, &vao);
-}
+Model::~Model() = default;
 
 void Model::draw(Shader& shader) const {
     shader.use();
     shader.setUniform("baseColorTexture", 0);
     shader.setUniform("metallicRoughnessTexture", 2);
-    glBindVertexArray(vao);
+    vao.bind();
 
     for (const Submesh& submesh : submeshes) {
         const Material& material = materials[submesh.materialIndex];
@@ -547,7 +531,7 @@ void Model::draw(Shader& shader) const {
 }
 
 void Model::drawDepth() const {
-    glBindVertexArray(vao);
+    vao.bind();
     glDrawElements(
         GL_TRIANGLES,
         static_cast<GLsizei>(indexCount),
