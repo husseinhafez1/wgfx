@@ -1,8 +1,8 @@
 #include "shader.h"
+#include "util.h"
 
 #include <algorithm>
 #include <filesystem>
-#include <fstream>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
@@ -20,13 +20,9 @@ std::string readShaderFile(
         throw std::runtime_error("Shader include cycle at '" + normalizedPath.string() + "'.");
     }
 
-    std::ifstream file(normalizedPath);
-    if (!file.is_open()) {
-        throw std::runtime_error("Failed to open shader file '" + normalizedPath.string() + "'.");
-    }
-
     includeStack.push_back(normalizedPath);
     std::stringstream source;
+    std::istringstream file(util::readTextFile(normalizedPath));
     std::string line;
     while (std::getline(file, line)) {
         const std::size_t directive = line.find("#include");

@@ -301,9 +301,7 @@ void Renderer::renderFrame(const glm::mat4& view, const glm::mat4& projection) {
     skybox->bind(1);
     spotShadowMap->bind(3);
     pointShadowMap->bind(4);
-    if (lighting->hasDirectional()) {
-        directionalShadowMap->bind(5);
-    }
+    directionalShadowMap->bind(5);
     drawScene(shader);
     skybox->draw(view, projection);
 }

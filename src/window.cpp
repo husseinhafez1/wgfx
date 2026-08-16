@@ -1,4 +1,5 @@
 #include "window.h"
+#include "util.h"
 
 namespace wgfx {
 
@@ -38,6 +39,9 @@ Window::Window(std::string title, int width, int height, GraphicsBackend backend
             glfwTerminate();
             return;
         }
+#ifndef NDEBUG
+        util::enableOpenGLDebugOutput();
+#endif
     }
 
     glfwGetFramebufferSize(window, &this->width, &this->height);

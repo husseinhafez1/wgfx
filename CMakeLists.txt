@@ -105,6 +105,8 @@ target_compile_features(imgui PUBLIC cxx_std_17)
 
 add_executable(wgfx
     main.cpp
+    src/util.cpp
+    include/util.h
     src/shader.cpp
     include/shader.h
     src/camera.cpp

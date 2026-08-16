@@ -1,7 +1,7 @@
 #include "pipeline.h"
+#include "util.h"
 
 #include <filesystem>
-#include <fstream>
 #include <stdexcept>
 #include <cassert>
 
@@ -31,20 +31,9 @@ Pipeline::~Pipeline() {
 
 std::vector<char> Pipeline::readFile(const std::string& filePath) {
     const std::filesystem::path resolvedPath = std::filesystem::path(SHADER_DIR) / filePath;
-    std::ifstream file(resolvedPath, std::ios::ate | std::ios::binary);
-    if (!file.is_open()) {
-        throw std::runtime_error("Failed to open shader file: " + resolvedPath.string());
-    }
-
-    const std::streamsize fileSize = file.tellg();
-    if (fileSize <= 0 || fileSize % 4 != 0) {
+    std::vector<char> buffer = util::readBinaryFile(resolvedPath);
+    if (buffer.empty() || buffer.size() % 4 != 0) {
         throw std::runtime_error("Invalid SPIR-V shader file: " + resolvedPath.string());
-    }
-
-    std::vector<char> buffer(static_cast<size_t>(fileSize));
-    file.seekg(0);
-    if (!file.read(buffer.data(), fileSize)) {
-        throw std::runtime_error("Failed to read shader file: " + resolvedPath.string());
     }
     return buffer;
 }
