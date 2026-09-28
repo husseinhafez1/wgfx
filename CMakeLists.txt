@@ -4,16 +4,6 @@ project(wgfx LANGUAGES C CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL "Generate compile commands for editor tooling" FORCE)
 
-# Rootless sysroot: Fedora -devel headers extracted to $HOME without sudo.
-# Lets vendored builds (e.g. FlyCube) find system headers like xcb/xcb.h.
-# BEFORE keeps it ahead of FlyCube's own Vulkan-Headers in every target so
-# all TUs see the same (newer) headers; mixing versions changes rendering
-# behavior. main.cpp queries the device version through the stable C API,
-# which is immune to vulkan.hpp's dispatcher version assert.
-if(EXISTS "$ENV{HOME}/.local/wgfx-sysroot/usr/include")
-    include_directories(BEFORE "$ENV{HOME}/.local/wgfx-sysroot/usr/include")
-endif()
-
 find_package(Vulkan REQUIRED)
 
 if(NOT Vulkan_GLSLC_EXECUTABLE)
@@ -77,24 +67,30 @@ add_custom_target(vulkan_shaders ALL DEPENDS ${VULKAN_SHADER_BINARIES})
 add_library(glad STATIC deps/glad/src/glad.c)
 target_include_directories(glad PUBLIC deps/glad/include)
 
+add_library(glm INTERFACE)
+add_library(glm::glm ALIAS glm)
+target_include_directories(glm INTERFACE deps/glm)
+
 add_library(tinyobjloader STATIC deps/tinyobjloader/tiny_obj_loader.cc)
 target_include_directories(tinyobjloader PUBLIC deps/tinyobjloader)
+
+add_library(stb_image STATIC deps/stb/stb_image.cpp)
+target_include_directories(stb_image PUBLIC deps/stb)
 
 set(FASTGLTF_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
 set(FASTGLTF_ENABLE_TESTS OFF CACHE BOOL "" FORCE)
 set(FASTGLTF_ENABLE_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(deps/fastgltf EXCLUDE_FROM_ALL)
 
-# FlyCube provides the glfw, glm and stb_image targets (samples and tests off).
-# GLFW is built for X11 only; on Wayland sessions it runs through XWayland.
-set(BUILD_SAMPLES OFF CACHE BOOL "" FORCE)
-set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
-set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "" FORCE)
-add_subdirectory(deps/FlyCube EXCLUDE_FROM_ALL)
-add_library(glm::glm ALIAS glm)
-
-if(NOT WIN32)
+if(WIN32)
+    add_library(glfw STATIC IMPORTED)
+    set_target_properties(glfw PROPERTIES
+        IMPORTED_LOCATION "${CMAKE_CURRENT_SOURCE_DIR}/deps/glfw/lib-vc2022/glfw3.lib"
+        INTERFACE_INCLUDE_DIRECTORIES "${CMAKE_CURRENT_SOURCE_DIR}/deps/glfw/include"
+    )
+else()
     find_package(OpenGL REQUIRED)
+    find_package(glfw3 REQUIRED)
 endif()
 
 add_library(imgui STATIC
@@ -111,32 +107,6 @@ target_include_directories(imgui PUBLIC
 )
 target_link_libraries(imgui PUBLIC glfw)
 target_compile_features(imgui PUBLIC cxx_std_17)
-
-# Our Vulkan backend lives in its own library so it does not inherit
-# FlyCube's VK_NO_PROTOTYPES compile definition (it uses the static loader).
-add_library(wgfx_vk STATIC
-    src/vulkan_device.cpp
-    include/vulkan_device.h
-    src/pipeline.cpp
-    include/pipeline.h
-    src/swap_chain.cpp
-    include/swap_chain.h
-    src/vk_renderer.cpp
-    include/vk_renderer.h
-)
-target_compile_features(wgfx_vk PRIVATE cxx_std_20)
-target_include_directories(wgfx_vk PUBLIC include)
-target_compile_definitions(wgfx_vk PRIVATE
-    SHADER_DIR="${CMAKE_CURRENT_SOURCE_DIR}/res/shaders/"
-    MODEL_DIR="${CMAKE_CURRENT_SOURCE_DIR}/res/models/"
-    CUBEMAP_DIR="${CMAKE_CURRENT_SOURCE_DIR}/res/cubemaps/"
-)
-target_link_libraries(wgfx_vk PRIVATE
-    glad
-    glfw
-    glm::glm
-    Vulkan::Vulkan
-)
 
 add_executable(wgfx
     main.cpp
@@ -172,6 +142,14 @@ add_executable(wgfx
     include/renderer.h
     src/imgui_layer.cpp
     include/imgui_layer.h
+    src/vulkan_device.cpp
+    include/vulkan_device.h
+    src/pipeline.cpp
+    include/pipeline.h
+    src/swap_chain.cpp
+    include/swap_chain.h
+    src/vk_renderer.cpp
+    include/vk_renderer.h
 )
 add_dependencies(wgfx vulkan_shaders)
 target_compile_features(wgfx PRIVATE cxx_std_20)
@@ -190,7 +168,6 @@ if(WIN32)
         tinyobjloader
         stb_image
         fastgltf::fastgltf
-        FlyCube
         Vulkan::Vulkan
         opengl32
         gdi32
@@ -207,8 +184,7 @@ else()
         tinyobjloader
         stb_image
         fastgltf::fastgltf
-        FlyCube
-        wgfx_vk
-        ${OPENGL_gl_LIBRARY}
+        Vulkan::Vulkan
+        OpenGL::GL
     )
 endif()

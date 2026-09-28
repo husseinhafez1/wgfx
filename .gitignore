@@ -44,7 +44,6 @@ build/
 Build/
 build-*/
 .vs/
-.vscode/
 
 # CMake generated files
 CMakeFiles/
@@ -74,6 +73,3 @@ Testing/
 # Keep vendored dependencies, including prebuilt libraries.
 !deps/
 !deps/**
-
-# FlyCube is a 2GB reference framework; never commit it.
-deps/FlyCube/
