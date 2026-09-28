@@ -6,8 +6,12 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL "Generate compile commands for e
 
 # Rootless sysroot: Fedora -devel headers extracted to $HOME without sudo.
 # Lets vendored builds (e.g. FlyCube) find system headers like xcb/xcb.h.
+# BEFORE keeps it ahead of FlyCube's own Vulkan-Headers in every target so
+# all TUs see the same (newer) headers; mixing versions changes rendering
+# behavior. main.cpp queries the device version through the stable C API,
+# which is immune to vulkan.hpp's dispatcher version assert.
 if(EXISTS "$ENV{HOME}/.local/wgfx-sysroot/usr/include")
-    include_directories("$ENV{HOME}/.local/wgfx-sysroot/usr/include")
+    include_directories(BEFORE "$ENV{HOME}/.local/wgfx-sysroot/usr/include")
 endif()
 
 find_package(Vulkan REQUIRED)
@@ -205,7 +209,6 @@ else()
         fastgltf::fastgltf
         FlyCube
         wgfx_vk
-        Vulkan::Vulkan
-        OpenGL::GL
+        ${OPENGL_gl_LIBRARY}
     )
 endif()

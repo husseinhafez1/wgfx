@@ -15,6 +15,7 @@
 
 #include <Device/Device.h>
 #include <Instance/Instance.h>
+#include <Adapter/VKAdapter.h>
 
 #include <cstdint>
 #include <iostream>
@@ -28,6 +29,11 @@ namespace {
 constexpr uint32_t kWidth = 640;
 constexpr uint32_t kHeight = 480;
 constexpr uint32_t kFrameCount = 3;
+
+// Queried through the stable C API: vulkan.hpp's dynamic dispatcher asserts
+// on the header version, which differs between our TUs and FlyCube's.
+extern "C" void vkGetPhysicalDeviceProperties(VkPhysicalDevice physicalDevice,
+                                              VkPhysicalDeviceProperties* pProperties);
 
 NativeSurface getNativeSurface(GLFWwindow* window) {
     return XlibSurface{
@@ -84,14 +90,25 @@ NativeSurface getNativeSurface(GLFWwindow* window) {
 int main() {
     std::shared_ptr<Instance> instance = CreateInstance(ApiType::kVulkan);
     const std::vector<std::shared_ptr<Adapter>> adapters = instance->EnumerateAdapters();
+    std::shared_ptr<Adapter> adapter;
     for (const std::shared_ptr<Adapter>& candidate : adapters) {
         std::cout << "FlyCube adapter: " << candidate->GetName() << '\n';
+        auto* vk_adapter = dynamic_cast<VKAdapter*>(candidate.get());
+        if (vk_adapter == nullptr) {
+            continue;
+        }
+        VkPhysicalDeviceProperties properties{};
+        vkGetPhysicalDeviceProperties(
+            static_cast<VkPhysicalDevice>(vk_adapter->GetPhysicalDevice()), &properties);
+        if (properties.apiVersion >= VK_API_VERSION_1_4) {
+            adapter = candidate;
+            break;
+        }
     }
-    if (adapters.size() < 2) {
-        std::cerr << "Expected at least 2 adapters.\n";
+    if (!adapter) {
+        std::cerr << "No adapter with Vulkan 1.4 support found.\n";
         return -1;
     }
-    std::shared_ptr<Adapter> adapter = adapters[1];
     std::cout << "Selected adapter: " << adapter->GetName() << '\n';
 
     GLFWwindow* window;
@@ -109,7 +126,7 @@ int main() {
     std::shared_ptr<Device> device = adapter->CreateDevice();
     std::shared_ptr<CommandQueue> command_queue = device->GetCommandQueue(CommandListType::kGraphics);
     NativeSurface surface = getNativeSurface(window);
-    std::shared_ptr<Swapchain> swapchain = device->CreateSwapchain(surface, kWidth, kHeight, kFrameCount, false);
+    std::shared_ptr<Swapchain> swapchain = device->CreateSwapchain(surface, kWidth, kHeight, kFrameCount, true);
 
     std::vector<uint32_t> index_data = {0,1,2};
     std::shared_ptr<Resource> index_buffer = device->CreateBuffer(MemoryType::kUpload, { .size = sizeof(index_data.front()) * index_data.size(), .usage = BindFlag::kIndexBuffer });
