@@ -23,6 +23,7 @@
                 "${workspaceFolder}/deps/FlyCube/src/Modules/AppLoop",
                 "${workspaceFolder}/deps/FlyCube/src/Modules/AppSettings",
                 "${workspaceFolder}/deps/FlyCube/src/Modules/RenderUtils",
+                "${workspaceFolder}/deps/FlyCube/3rdparty/glm",
                 "${env:HOME}/.local/wgfx-sysroot/usr/include"
             ],
             "defines": [
