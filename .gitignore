@@ -73,3 +73,6 @@ Testing/
 # Keep vendored dependencies, including prebuilt libraries.
 !deps/
 !deps/**
+
+# Editor settings (local only, never commit)
+.vscode/
